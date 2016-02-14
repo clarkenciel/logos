@@ -55,15 +55,6 @@
       (record-buf lin-mag scope-buf)))
   )
 
-(defn fft-get []
-  (ol/buffer-data fft-buf))
-
-(defn fft-map [f]
-  (map f (fft-get)))
-
-(defn fft-reduce [op acc]
-  (reduce op acc (fft-get)))
-
 (ol/defsynth ffter [input 0 tgt-buf 1]
   (ol/fft tgt-buf (ol/in:ar input)))
 
@@ -75,3 +66,12 @@
 (defonce ana-group (ol/group "ana group"))
 (defonce in-sig (mic-in [:head ana-group] in-bus))
 (defonce in-fft (ffter [:after in-sig] in-bus fft-buf))
+
+(defn fft-get []
+  (ol/buffer-data fft-buf))
+
+(defn fft-map [f]
+  (map f (fft-get)))
+
+(defn fft-reduce [op acc]
+  (reduce op acc (fft-get)))

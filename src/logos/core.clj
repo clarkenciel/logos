@@ -17,23 +17,13 @@
 
 ;; UTILS
 
+;; TODO: should move fft-polling out of draw and into update
+
 (defn tap->rgb [ugen tap ulo uhi]
   (q/map-range (get-tap-val ugen tap)
                ulo uhi 0 255))
 
-(defn draw-fft [state]
-  (let [h (q/height)
-        w (q/width)]
-    ;;(q/background 0)
-    (q/fill 0 0 0 50)
-    (q/rect 0 0 w h)
-    (let [data (fft-map #(q/constrain (* 100 %) 0 (/ h 2)))]
-      (vec->hist 0 data w
-                 (fn [x]
-                   (map #(mod % 255) [x (state :b) (state :g)])))
-      ;;(q/fill 255)
-      ;;(vec->text 0 data (q/width))
-      )))
+
 
 (defn draw-text [state]
   (q/background 0)
@@ -42,22 +32,44 @@
 
 ;; MAIN
 
-(defn q-setup []
+(defn fft-setup []
   (do (q/frame-rate 120)
       (q/no-stroke)
-      {:g 100 :b 100}))
+      {:fft-data '()  :g 100 :b 100 :h (q/height) :w (q/width)}))
 
-(defn q-update [state]
+(defn fft-update [state]
   (let [g (state :g)
         b (state :b)
-        [g b] (map #(mod (+ % (+ -9 (rand 10))) 256) [g b])]
-    (assoc state :g g :b b)))
+        [g b] (map #(+ % (+ -5 (rand 10))) [g b])
+        fd (fft-map #(* 100 %))
+        m  (apply max fd)]
+    (assoc state :fft-data fd :g g :b b :biggest m :h (q/height) :w (q/width))))
 
-(q/defsketch q-logos
-  :title ""
-  :size [500 500]
-  :setup q-setup
-  :update q-update
-  :draw draw-fft
-  :renderer :opengl
-  :middleware [m/fun-mode])
+(defn fft-draw [state]
+  (let [h (state :h)
+        w (state :w)
+        g (state :g)
+        b (state :b)
+        m (clojure.string/join ["Max Value: " (str (state :biggest))])
+        tx (* w 0.66)
+        ty (* h 0.10)]
+    (fade-bg 45 w h)
+    (q/fill 120)
+    (q/rect (- tx 10) (- ty 15) 200 20)
+    (q/fill 255)
+    (q/text m tx ty)
+    (let [data (state :fft-data)]
+      (col->hist 0 (/ h 2) w
+                 (fn [x]
+                   (map #(q/constrain (q/abs %) 0 255) [x g b x]))
+                 data))))
+
+(def q-logos (quil.applet/applet
+              :title ""
+              ;;  :renderer :p3d
+              :size [500 500]
+              :setup fft-setup
+              :update fft-update
+              :draw fft-draw
+              :middleware [m/fun-mode]
+              :features [:no-start]))
