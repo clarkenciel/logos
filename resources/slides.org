@@ -1,0 +1,31 @@
+
+* slide 1:
+some text!
+
+* slide 2:
+more text. *this text is important*
+
+* slide 3:
+some final text.
+
+* slide 4:
+normal preceding *special text* normal post.
+
+* slide 5:
+a *special preceding* normal post.
+
+* slide 6:
+multi line slides.
+how do they work?
+
+* slide 7:
+*multi line slides with special preceding* how
+do they work?
+
+* slide 8:
+how do *multi line* slides with
+special text in the middle work
+
+* slide 9:
+how do slides with special text
+*at the end work?*

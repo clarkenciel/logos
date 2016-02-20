@@ -36,3 +36,12 @@
         h (q/height)]
     (doseq [[d i] (zipmap data (range l))]
       (q/text (str d) (+ x-start (* w i)) (- h d)))))
+
+(defn make-viz [setup update draw]
+  (q/sketch
+   :title ""
+   :size [500 500]
+   :setup setup
+   :update update
+   :draw draw
+   :middleware [m/fun-mode]))

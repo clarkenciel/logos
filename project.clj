@@ -6,4 +6,4 @@
   :dependencies [[org.clojure/clojure "1.7.0"]
                  [quil "2.3.0-SNAPSHOT"]
                  [overtone "0.9.1"]
-                 [com.googlecode.gstreamer-java "1.5"]])
+])

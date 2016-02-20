@@ -30,48 +30,41 @@
         mix (ol/mix [sig del])]
     (ol/out output mix)))
 
-;; good reference:
-;; https://github.com/overtone/shadertone/blob/master/src/shadertone/tone.clj#L81
-
-(comment
-  (defsynth bus-freqs->buf
-    [in-bus 0 scope-buf 1 fft-buf-size WAVE-BUF-SIZE-2X rate 2]
-    (let [phase     (- 1 (* rate (reciprocal fft-buf-size)))
-          fft-buf   (local-buf fft-buf-size 1)
-          ;; drop DC & nyquist samples
-          n-samples (* 0.5 (- (buf-samples:ir fft-buf) 2))
-          signal    (in in-bus 1)
-          ;; found 0.5 window gave less periodic noise
-          freqs     (fft fft-buf signal 0.5 HANN)
-          ;; indexer = 2, 4, 6, ..., N-4, N-2
-          indexer   (+ n-samples 2
-                       (* (lf-saw (/ rate (buf-dur:ir fft-buf)) phase) ;; what are limits to this rate?
-                          n-samples))
-          indexer   (round indexer 2) ;; always point to the real sample
-          ;; convert real,imag pairs to magnitude
-          s0        (buf-rd 1 fft-buf indexer 1 1)
-          s1        (buf-rd 1 fft-buf (+ 1 indexer) 1 1) ; kibit keep
-          lin-mag   (sqrt (+ (* s0 s0) (* s1 s1)))]
-      (record-buf lin-mag scope-buf)))
-  )
-
 (ol/defsynth ffter [input 0 tgt-buf 1]
   (ol/fft tgt-buf (ol/in:ar input)))
 
-(ol/defsynth mic-in [out-bus 0]
-  (ol/out:ar out-bus (ol/sound-in)))
+(ol/defsynth pipe-in [src 0 out-bus 0]
+  (ol/out:ar out-bus (ol/sound-in [src (+ 1 src)])))
 
-(defonce fft-buf (ol/buffer 512))
-(defonce in-bus (ol/audio-bus))
-(defonce ana-group (ol/group "ana group"))
-(defonce in-sig (mic-in [:head ana-group] in-bus))
-(defonce in-fft (ffter [:after in-sig] in-bus fft-buf))
+(ol/defsynth pipe-out [in-bus 0 tgt 0]
+  (ol/out [tgt (+ 1 tgt)] (ol/in in-bus)))
 
-(defn fft-get []
-  (ol/buffer-data fft-buf))
+(ol/defsynth ja-det [in-bus 0 out-bus 0]
+  (let [sig  (ol/in:ar in-bus)
+        buf  (ol/local-buf 512 2)
+        ana  (ol/fft buf sig :wintype ol/HANN)
+        det1  (< (ol/spec-flatness ana) 0.0098)
+        det2  (ol/pv-jensen-andersen ana 0.5 0.8 0.2 0.8 0.15717724 0.025)]
+    (ol/out out-bus (* det1 det2))))
 
-(defn fft-map [f]
-  (map f (fft-get)))
+(ol/defsynth sine [in-bus 0 out-bus 0]
+  (ol/out out-bus (ol/limiter (* (ol/decay (ol/in in-bus) 0.1) (ol/sin-osc 440))
+                              0.5)))
 
-(defn fft-reduce [op acc]
-  (reduce op acc (fft-get)))
+;; testing
+(ol/pp-node-tree)
+(ol/node-free j)
+(ol/node-pause ana-group)
+
+(defonce ana-group (ol/group "ana"))
+(defonce ana-early (ol/group "ana-early" :head ana-group))
+(defonce ana-late  (ol/group "ana-late" :after ana-early))
+
+(def in-bus (ol/audio-bus 2 "input"))
+(def route1 (ol/audio-bus 2 "route1"))
+(def out-bus (ol/audio-bus 2 "output"))
+
+(def input (pipe [:head ana-early] 3 in-bus))
+(def j (ja-det [:after input] in-bus route1))
+(def snd (sine [:head ana-late] route1 out-bus))
+(def output (pipe-out [:after snd] out-bus))
