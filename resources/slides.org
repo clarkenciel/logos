@@ -1,17 +1,17 @@
 
-* slide 1:
+* Introduction pt. 1:
 some text!
 
-* slide 2:
+* Introduction pt. 2:
 more text. *this text is important*
 
-* slide 3:
+* Middle section pt. 3:
 some final text.
 
-* slide 4:
+* Middle section pt. 5:
 normal preceding *special text* normal post.
 
-* slide 5:
+* Middle section pt. 7:
 a *special preceding* normal post.
 
 * slide 6:
@@ -29,3 +29,7 @@ special text in the middle work
 * slide 9:
 how do slides with special text
 *at the end work?*
+
+* slide 10:
+how do slides with *special text
+split across lines* work?
