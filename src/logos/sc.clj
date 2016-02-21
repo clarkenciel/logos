@@ -1,115 +1,81 @@
 (ns logos.sc
-  (:require [overtone.live :as ol])
   (:use overtone.live))
 
 ;; ==================== OVERTONE
 
 ;; helper funcs
 (defn restart-server []
-  (when (ol/server-connected?)
+  (when (server-connected?)
     (do
-      (ol/kill-server)
-      (ol/boot-server))))
+      (kill-server)
+      (boot-server))))
 
 (defn get-tap-val [ugen tap-name]
   (deref (get-in ugen [:taps tap-name])))
 
 ;; Some Synths
-(ol/defsynth sine-tap
-  [output 0 freq 220 amp 0.2 phase 0]
-  ;; taps require control rate, but we're fine here
-  (let [sig (* amp (ol/sin-osc:ar freq phase))
-        _ (ol/tap "lf-sine-tap" 60 (ol/a2k sig))]
-    (ol/out output sig)))
+(defsynth pipe-in [src 0 out-bus 0]
+  (let [input (sound-in [src (+ 1 src)])]
+    (do
+      ;;(poll (impulse:kr 20) (a2k input) "input: ")
+      (out:ar out-bus input))))
 
-(ol/defsynth sine-del-tap
-  [output 0 freq 220 amp 0.2 phase 0 del 0.5 dec 0.2 rate 1]
-  (let [env (ol/linen:kr (ol/impulse:kr rate) 0.1 1 0.5)
-        sig (* env amp (ol/sin-osc:ar freq phase))
-        del (ol/comb-n sig 2 del dec)
-        _   (ol/tap "sig" 60 (ol/a2k sig))
-        _   (ol/tap "del" 60 (ol/a2k del))
-        _   (ol/tap "env" 60 env)
-        mix (ol/mix [sig del])]
-    (ol/out output mix)))
+(defsynth pipe-out [in-bus 0 tgt 0]
+  (out [tgt (+ 1 tgt)] (in in-bus)))
 
-(ol/defsynth ffter [input 0 tgt-buf 1]
-  (ol/fft tgt-buf (ol/in:ar input)))
+(defsynth ja-det [in-bus 0 out-bus 0]
+  (let [sig  (in in-bus)
+        buf  (local-buf 512 2)
+        ana  (fft buf sig :wintype HANN)
+        det1  (< (spec-flatness ana) 0.0098)
+        det2  (pv-jensen-andersen ana 0.5 0.8 0.2 0.8 0.15717724 0.025)]
+    (do
+      (poll (impulse:kr 20) (a2k (* det1 det2)) "ja-det: ")
+      (out out-bus (* det1 det2)))))
 
-(ol/defsynth pipe-in [src 0 out-bus 0]
-  (ol/out:ar out-bus (ol/sound-in [src (+ 1 src)])))
+(defsynth onset-send [in-bus 0]
+  (do
+    (send-reply (a2k (in in-bus)) "/onset" 1)))
 
-(ol/defsynth pipe-out [in-bus 0 tgt 0]
-  (ol/out [tgt (+ 1 tgt)] (ol/in in-bus)))
+;; event handling
 
-(ol/defsynth ja-det [in-bus 0 out-bus 0]
-  (let [sig  (ol/in:ar in-bus)
-        buf  (ol/local-buf 512 2)
-        ana  (ol/fft buf sig :wintype ol/HANN)
-        det1  (< (ol/spec-flatness ana) 0.0098)
-        det2  (ol/pv-jensen-andersen ana 0.5 0.8 0.2 0.8 0.15717724 0.025)]
-    (ol/out out-bus (* det1 det2))))
+(defn event-vals [evt]
+  (drop 2 (:args evt)))
 
-(ol/defsynth sine [in-bus 0 out-bus 0]
-  (ol/out out-bus (ol/limiter (* (ol/decay (ol/in in-bus) 0.1) (ol/sin-osc 440))
-                              0.5)))
+(defn event-concat-fac [atm]
+  (fn [e]
+    (swap! atm #(concat % (event-vals e)))))
 
-;; testing analysis
-(comment (ol/pp-node-tree)
-         (ol/node-free j)
-         (ol/node-pause ana-group)
+(defn event-adder-fac [atm]
+  (fn [e]
+    (swap! atm #(+ 1 %))))
 
-         (defonce ana-group (ol/group "ana"))
-         (defonce ana-early (ol/group "ana-early" :head ana-group))
-         (defonce ana-late  (ol/group "ana-late" :after ana-early))
+;; Analysis set up
+;; pipe audio through analysis and to output without modification
+(def ana-group        (group "ana"))
+(def inputs           (group "inputs"    :head ana-group))
+(def analyzers        (group "ana-early" :after inputs))
+(def analysis-senders (group "ana-late"  :after analyzers))
 
-         (def in-bus (ol/audio-bus 2 "input"))
-         (def route1 (ol/audio-bus 2 "route1"))
-         (def out-bus (ol/audio-bus 2 "output"))
+(def in-bus  (audio-bus 2 "input"))
+(def router  (audio-bus 2 "router"))
 
-         (def input (pipe [:head ana-early] 3 in-bus))
-         (def j (ja-det [:after input] in-bus route1))
-         (def snd (sine [:head ana-late] route1 out-bus))
-         (def output (pipe-out [:after snd] out-bus)))
+(def main-in        (pipe-in [:head inputs] 3 in-bus))
+(def main-out       (pipe-out [:after main-in] in-bus 0))
+(def onset-detector (ja-det [:head analyzers] in-bus router))
+(def onset-sender   (onset-send [:head analysis-senders] router))
 
-;; testing send-reply
+;; Listener set up
+(defonce onset-counter (atom 0))
+(defonce pitch-record (atom []))
+
+(on-event "/onset" (event-adder-fac onset-counter) ::onset-counter)
+;;(on-event "/pitch" (event-concat-fac pitch-record) ::pitch-recorder)
+
 (comment
-  (defsynth sender [rate 1 lo -1 hi 1]
-    (let [t (impulse:kr rate)
-          v1 (t-rand:kr lo hi t)
-          v2 (t-rand:kr lo hi t)
-          v3 (t-rand:kr lo hi t)]
-      (send-reply t "/rate" [v1 v2 v3])))
-
-  (node-free s)
-  (def s (sender))
-
-  (defn average [vals]
-    (/ (reduce + 0 vals) (count vals)))
-  
-  (defn std-dev [vals]
-    (Math/sqrt (average vals)))
-
-  (def a (atom {:name "a"
-                :vals [0 0 0]
-                :dev 0.0
-                }))
-
-  (defn mutate-a [a event]
-    (let [nuvals (vec (map + (rest (rest (:args event)))
-                           (:vals a)))
-          nudev (std-dev nuvals)]
-      (assoc a :vals nuvals :dev nudev)))
-
-  (on-event "/rate"
-            (fn [event]
-              (swap! a mutate-a event))
-            ::rate-receiver1)
-
-  (on-event "/print"
-            (fn [e] (println a))
-            ::rate-printer1)
-
-  (remove-event-handler ::rate-receiver1)
-  (remove-event-handler ::rate-printer1)
-  )
+  (restart-server)
+  (pp-node-tree)
+  (node-free onset-detector)
+  (doseq [x (range 41 45)] (node-free x))
+  onset-counter
+)

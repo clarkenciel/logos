@@ -10,12 +10,21 @@
 (defn safe-start []
   (do
     (throwaway)
-    (require '(overtone [live :as ol]))
     (use 'logos.sc)))
 
 ;; UTILS
+(defn atom? [v]
+  (instance? clojure.lang.Atom v))
 
-;; TODO: should move fft-polling out of draw and into update
+(defn reset-counter [c]
+  (swap! c (fn [_] 0)))
+
+(defn store-val [coll v]
+  (swap! coll (fn [c]
+                (conj c (if (atom? v) @v v)))))
+
+(defn reset-val-store [coll]
+  (swap! coll (fn [_] [])))
 
 ;; MAIN
 (defn setup [] nil)
