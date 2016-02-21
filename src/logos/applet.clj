@@ -364,12 +364,3 @@
 
 (defn throwaway []
   (applet-disposed (applet-run (applet :size [0 0]) "" :p2d)))
-
-(def my-app (applet :size [100 100]
-                    :setup (fn [] nil)
-                    :update (fn [s] {:x 50 :y 50})
-                    :draw (fn [{x :x y :y}]
-                            (quil.core/fill 0)
-                            (quil.core/ellipse x y 10 10))
-                    :middleware [m/fun-mode]))
-(run-viz my-app "hi" :java2d)
