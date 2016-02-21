@@ -30,8 +30,8 @@
         det1  (< (spec-flatness ana) 0.0098)
         det2  (pv-jensen-andersen ana 0.5 0.8 0.2 0.8 0.15717724 0.025)]
     (do
-      (poll (impulse:kr 20) (a2k (* det1 det2)) "ja-det: ")
-      (out out-bus (* det1 det2)))))
+;;      (poll (impulse:kr 20) (a2k (* 1 det2)) "ja-det: ")
+      (out out-bus (* 1 det2)))))
 
 (defsynth onset-send [in-bus 0]
   (do
