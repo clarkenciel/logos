@@ -51,55 +51,89 @@
 ;; ===== TEXT BOXES
 
 (defn words [s]
-  (s/split s #"\b"))
+  (s/split s #"\s"))
 
 (defn unwords [l]
-  (apply str (flatten l)))
+  (s/join " " (flatten l)))
 
 (defn maybe-font [font-name size]
-  (if (some #{font-name} fonts)
-    (q/text-font font-name size)))
+  (when (some #{font-name} fonts)
+    (q/text-font (q/create-font font-name size))))
 
 (defn insert-breaks [s]
   (let [l (words s)]
-    (flatten (interpose "\n" (partition-all (/ (count l) 2) l)))))
+    (unwords (interpose "\n" (partition-all (/ (count l) 2) l)))))
 
 (defn too-long?
   ([s]
-   (too-long? s (q/width)))
+   (too-long? s 10))
   ([s width]
-   (> (q/text-width s) width)))
+   (> (count (words s)) width)))
 
-(defn string->rows
+(defn maybe-lines
   ([s]
-   (string->rows s (q/width)))
-  ([s width]
-   (if (too-long? s width)
-     (let [v (map (fn [s] (string->rows s width)) (insert-breaks s))]
-       (println v)
-       (unwords v))
-     (do (println "not too long" (q/text-width s)) s))))
+   (if (not (too-long? s))
+     s
+     (insert-breaks s)))
+  ([s w]
+   (if (not (too-long? s w))
+     s
+     (insert-breaks s))))
 
-(defn text-box [words]
-  (q/background 0)
-  (q/fill 255)
-  (q/text words 250 250))
+(defn text-height
+  "retrieves height of a block of text by multiplying
+  the sum of text ascent and descent by the number of 
+  newlines and returns
+  "
+  [s]
+  (let [line-count (count (s/split-lines s))]
+    (* line-count (+ (q/text-ascent) (q/text-descent)))))
+
+(defn text-box [box-spec]
+  (apply q/background (get box-spec :bg [255]))
+  (apply q/fill (get box-spec :font-color [0]))
+  (q/text (maybe-lines (box-spec :text)
+                       (get box-spec :word-limit 10))
+          (get box-spec :left-margin 250)
+          (get box-spec :top-margin 250)))
+
+;; text characteristics for setup:
+;; text-leading - spacing between lines
+;; text-font
+;; text-size
+;; word-limit
+;; left-margin
+;; top-margin
+
+(defn text-setup [info]
+  (q/text-leading (get info :leading 10))
+  (maybe-font (get info :font "Times New Roman")
+              (get info :size 15)))
 
 (comment
-  (defn draw1 [s]
-    (q/background 0)
-    (q/text s 0 500)
-    (q/text (str (q/text-width s)) 500 350))
+
+  (defn setup1 []
+    (text-setup  {:leading 10
+                 :size 40
+                 :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"}))
 
   (defn update1 [s]
-    (let [v (unwords (take 5 (repeat "lotsa text right here oh boy!")))]
-      (string->rows v 10)))
+    {:text-box {:bg [255]
+                :word-limit 20
+                :top-margin (* (q/height) 0.4)
+                :left-margin (* (q/width) 0.1)
+                :font-color [0]
+                :text "Returns the ascent of the current font at its current size."}})
+  
+  (defn draw1 [s]
+    (text-box (s :text-box)))
   
   (q/defsketch quil-test
-    :size [700 700]
-    :setup (fn [] "text")
+    :size :fullscreen
+    :setup setup1
     :update update1
     :draw draw1
     :middleware [m/fun-mode])
   
   )
+
