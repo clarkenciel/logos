@@ -1,8 +1,10 @@
 (ns logos.q ^{:doc "Collection of rendering functions for quil"}
   (:require [quil.core :as q]
+            [quil.middleware :as m]
             [clojure.string :as s]))
 
 ;; ==================== QUIL
+(defonce fonts (q/available-fonts))
 
 ;; ===== GENERAL UTILS
 (defn fade-bg
@@ -48,8 +50,56 @@
 
 ;; ===== TEXT BOXES
 
-(defn text-row [string])
+(defn words [s]
+  (s/split s #"\b"))
+
+(defn unwords [l]
+  (apply str (flatten l)))
+
+(defn maybe-font [font-name size]
+  (if (some #{font-name} fonts)
+    (q/text-font font-name size)))
+
+(defn insert-breaks [s]
+  (let [l (words s)]
+    (flatten (interpose "\n" (partition-all (/ (count l) 2) l)))))
+
+(defn too-long?
+  ([s]
+   (too-long? s (q/width)))
+  ([s width]
+   (> (q/text-width s) width)))
+
+(defn string->rows
+  ([s]
+   (string->rows s (q/width)))
+  ([s width]
+   (if (too-long? s width)
+     (let [v (map (fn [s] (string->rows s width)) (insert-breaks s))]
+       (println v)
+       (unwords v))
+     (do (println "not too long" (q/text-width s)) s))))
+
 (defn text-box [words]
   (q/background 0)
   (q/fill 255)
   (q/text words 250 250))
+
+(comment
+  (defn draw1 [s]
+    (q/background 0)
+    (q/text s 0 500)
+    (q/text (str (q/text-width s)) 500 350))
+
+  (defn update1 [s]
+    (let [v (unwords (take 5 (repeat "lotsa text right here oh boy!")))]
+      (string->rows v 10)))
+  
+  (q/defsketch quil-test
+    :size [700 700]
+    :setup (fn [] "text")
+    :update update1
+    :draw draw1
+    :middleware [m/fun-mode])
+  
+  )
