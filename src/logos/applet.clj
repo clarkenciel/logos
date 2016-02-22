@@ -349,12 +349,13 @@
     :setup setup
     :draw draw))
   ([size setup update draw & opts]
-   (applet
-    (merge {:setup setup
-            :update update
-            :draw draw
-            :middleware [m/fun-mode]}
-           (apply hash-map opts)))))
+   (apply applet
+          (merge {:size size
+                  :setup setup
+                  :update update
+                  :draw draw
+                  :middleware [m/fun-mode]}
+                 (apply hash-map opts)))))
 
 (defn run-viz [viz title ren]
   (applet-run viz title ren))

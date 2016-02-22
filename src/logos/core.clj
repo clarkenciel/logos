@@ -1,6 +1,7 @@
 (ns logos.core
   (:use [logos.q]
-        [logos.applet]))
+        [logos.applet]
+        [logos.sc]))
 
 ;; SETUP
 
@@ -10,7 +11,7 @@
 (defn safe-start []
   (do
     (throwaway)
-    (use 'logos.sc)))
+    (sc-start)))
 
 ;; UTILS
 (defn atom? [v]
@@ -26,10 +27,33 @@
 (defn reset-val-store [coll]
   (swap! coll (fn [_] [])))
 
+(defn randrange [lo hi]
+  (+ lo (rand (- (- hi lo) 1))))
+
 ;; MAIN
-(defn setup [] nil)
-(defn updte [s] {:x 50 :y 50})
-(defn draw [{x :x y :y}]
+;; NB: need to have separate functions for each applet
+(defn setup1 [] {:x 50 :y 50})
+(defn updte1 [{x :x y :y :as s}]
+  (assoc s
+         :x (+ x (randrange -1 1))
+         :y (+ y (randrange -1 1))))
+(defn draw1 [{x :x y :y}]
   (circle x y 10))
-(def vis (make-viz [200 200] setup updte draw))
-(run-viz vis "hi" :p3d)
+
+(defn setup2 [] {:x 50 :y 50})
+(defn updte2 [{x :x y :y :as s}]
+  (assoc s
+         :x (+ x (randrange -1 1))
+         :y (+ y (randrange -1 1))))
+(defn draw2 [{x :x y :y}]
+  (circle x y 10))
+
+(def speaker (make-viz [700 700] setup1 updte1 draw1))
+(def audience (make-viz :fullscreen setup2 updte2 draw2))
+
+(comment
+  (run-viz speaker "hi" :p2d)
+  (run-viz audience "hi" :p2d)
+  (close-viz speaker)
+  (close-viz audience)
+  )
