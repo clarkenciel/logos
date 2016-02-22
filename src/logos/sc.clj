@@ -1,4 +1,4 @@
-(ns logos.sc
+(ns logos.sc ^{:doc "Supercollider audio analysis utilities"}
   (:use overtone.api))
 
 (immigrate-overtone-api)

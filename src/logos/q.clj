@@ -9,9 +9,11 @@
 ;; ===== GENERAL UTILS
 (defn fade-bg
   ([alpha]
-   (fade-bg alpha (q/width) (q/height)))
-  ([alpha w h]
-   (q/fill 0 0 0 alpha)
+   (fade-bg [0 0 0] alpha (q/width) (q/height)))
+  ([rgb alpha]
+   (fade-bg rgb alpha (q/width) (q/height)))
+  ([rgb alpha w h]
+   (apply q/fill (conj rgb alpha))
    (q/rect 0 0 w h)))
 
 (defn val->rgb [val ulo uhi]
@@ -97,43 +99,67 @@
           (get box-spec :left-margin 250)
           (get box-spec :top-margin 250)))
 
-;; text characteristics for setup:
-;; text-leading - spacing between lines
-;; text-font
-;; text-size
-;; word-limit
-;; left-margin
-;; top-margin
-
 (defn text-setup [info]
   (q/text-leading (get info :leading 10))
   (maybe-font (get info :font "Times New Roman")
               (get info :size 15)))
 
+(defn text-box-fac
+  "Returns a function that will take text and return a text-box map.
+  This factory takes in the following params:
+    - :bg
+    - :word-limit
+    - :top-margin
+    - :left-margin
+    - :font-color"
+  [& params]
+  (let [defaults   {:bg [255]
+                    :word-limit 10
+                    :top-margin #(* (q/height) 0.4)
+                    :left-margin #(* (q/height) 0.1)
+                    :font-color [0]}
+        overwrites (apply hash-map params)
+        p (merge defaults overwrites)]
+    (fn [t]
+      (let [tm (if (fn? (p :top-margin))
+                 ((p :top-margin)) (p :top-margin))
+            lm (if (fn? (p :left-margin))
+                 ((p :left-margin)) (p :left-margin))]
+        (merge p {:top-margin tm :left-margin lm :text t})))))
+
 (comment
 
+  (def texts (atom (for [n (range 100)] (str (rand n)))))
+  (def text (atom ""))
+    
   (defn setup1 []
-    (text-setup  {:leading 10
-                 :size 40
-                 :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"}))
+    (do
+      (text-setup  {:leading 10
+                    :size 40
+                    :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
+      (let [f (text-box-fac)]
+        {:draw false
+         :text-box-f f
+         :text-box (f "")})))
 
-  (defn update1 [s]
-    {:text-box {:bg [255]
-                :word-limit 20
-                :top-margin (* (q/height) 0.4)
-                :left-margin (* (q/width) 0.1)
-                :font-color [0]
-                :text "Returns the ascent of the current font at its current size."}})
+  (defn click-handle [s e]
+    (assoc s
+           :draw (not (s :draw))
+           :text-box ((s :text-box-f) (atomic-pop texts text)))
+    )
   
   (defn draw1 [s]
-    (text-box (s :text-box)))
+    (fade-bg 0)
+    (when (s :draw)
+        (text-box (s :text-box))))
   
   (q/defsketch quil-test
     :size :fullscreen
     :setup setup1
-    :update update1
+    :mouse-clicked click-handle
     :draw draw1
-    :middleware [m/fun-mode])
+    :middleware [m/fun-mode]
+    )
   
   )
 
