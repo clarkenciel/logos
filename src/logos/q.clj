@@ -127,39 +127,3 @@
                  ((p :left-margin)) (p :left-margin))]
         (merge p {:top-margin tm :left-margin lm :text t})))))
 
-(comment
-
-  (def texts (atom (for [n (range 100)] (str (rand n)))))
-  (def text (atom ""))
-    
-  (defn setup1 []
-    (do
-      (text-setup  {:leading 10
-                    :size 40
-                    :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-      (let [f (text-box-fac)]
-        {:draw false
-         :text-box-f f
-         :text-box (f "")})))
-
-  (defn click-handle [s e]
-    (assoc s
-           :draw (not (s :draw))
-           :text-box ((s :text-box-f) (atomic-pop texts text)))
-    )
-  
-  (defn draw1 [s]
-    (fade-bg 0)
-    (when (s :draw)
-        (text-box (s :text-box))))
-  
-  (q/defsketch quil-test
-    :size :fullscreen
-    :setup setup1
-    :mouse-clicked click-handle
-    :draw draw1
-    :middleware [m/fun-mode]
-    )
-  
-  )
-

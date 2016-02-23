@@ -61,23 +61,25 @@
 
 ;; TODO: Figure out how to do updating properly between the two
 ;; sets of slides
+;; Only speaker-click advances the slide
 (defn speaker-click [s]
-  (update-slide )
-  (assoc s :draw true :slide (next-slide)))
+  (do (next-slide)
+      (assoc s
+             :draw true
+             :slide (speaker-tb ((deref current-slide) :body)))))
 
 (defn speaker-draw [s]
-  (draw-slide s)
-)
+  (draw-slide s))
 
 ;; Audience
 (def audience-tb (text-box-fac))
 
 (defn aud-setup [] {:x 50 :y 50})
 
-(defn aud-click [{x :x y :y :as s}]
+(defn aud-click [s]
   (assoc s
-         :x (+ x (randrange -1 1))
-         :y (+ y (randrange -1 1))))
+         :draw true
+         :slide (audience-tb ((deref current-slide) :important))))
 
 (defn aud-draw [s]
   (draw-slide s))
