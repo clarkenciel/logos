@@ -2,7 +2,8 @@
   (:use [logos.slides]
         [logos.q]
         [logos.applet]
-        [logos.sc]))
+        [logos.sc])
+  (:require [quil.middleware :as m]))
 
 ;; ============= SETUP
 
@@ -32,7 +33,10 @@
   (+ lo (rand (- (- hi lo) 1))))
 
 ;; Slide Management
-(defn atomic-pop-fac [source proxy]
+(defn atomic-pop-fac
+  "Returns a function that will pop a value off of an atomic list
+  and place it in another atom."
+  [source proxy]
   (fn []
     (swap! proxy  (fn [_] (first @source)))
     (swap! source (fn [x] (rest x)))
@@ -56,76 +60,65 @@
 (defn speaker-setup []
   (text-setup {:leading 10
                :size 15
+               :font-color [0]
                :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
   {:draw false})
 
 ;; TODO: Figure out how to do updating properly between the two
 ;; sets of slides
 ;; Only speaker-click advances the slide
-(defn speaker-click [s]
+(defn speaker-click [s e]
   (do (next-slide)
       (assoc s
              :draw true
              :slide (speaker-tb ((deref current-slide) :body)))))
 
 (defn speaker-draw [s]
+;;  (text-box (speaker-tb (s :slide)))
   (draw-slide s))
 
 ;; Audience
 (def audience-tb (text-box-fac))
 
-(defn aud-setup [] {:x 50 :y 50})
+(defn aud-setup []
+  (text-setup {:leading 10
+               :size 30
+               :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
+  {:draw false})
 
-(defn aud-click [s]
+(defn aud-click [s e]
   (assoc s
          :draw true
          :slide (audience-tb ((deref current-slide) :important))))
 
-(defn aud-draw [s]
-  (draw-slide s))
+(defn aud-draw []
+  (draw-slide {:draw true
+               :slide (merge (audience-tb ((deref current-slide) :important))
+                             {:bg [(randrange 0 100)]})}))
 
-(def speaker (make-viz [700 700] setup1 updte1 draw1))
-(def audience (make-viz :fullscreen setup2 updte2 draw2))
+;; fix make-viz api
+(defapplet speaker 
+  :size [700 700]
+  :setup speaker-setup
+  :draw speaker-draw
+  :mouse-clicked speaker-click
+  :middleware [m/fun-mode])
+
+(defapplet audience
+  :size :fullscreen
+  :setup aud-setup
+  :draw aud-draw
+  :features [:present :resizable]
+  :middleware [m/pause-on-error])
 
 ;; ============= MAIN
 
 (comment
-  (run-viz speaker "hi" :p2d)
-  (run-viz audience "hi" :p2d)
-  (close-viz speaker)
-  (close-viz audience)
-  )
 
-(comment
-  (def texts (atom (for [n (range 100)] (str (rand n)))))
-  (def text (atom ""))
-  
-  (defn setup1 []
-    (do
-      (text-setup  {:leading 10
-                    :size 40
-                    :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-      (let [f (text-box-fac)]
-        {:draw false
-         :text-box-f f
-         :text-box (f "")})))
+  (do (run-app speaker "Speaker" :p3d)
+      (run-app audience "Audience" :p3d))
 
-  (defn click-handle [s e]
-    (assoc s
-           :draw (not (s :draw))
-           :text-box ((s :text-box-f) (atomic-pop texts text)))
-    )
-  
-  (defn draw1 [s]
-    (fade-bg 0)
-    (when (s :draw)
-      (text-box (s :text-box))))
-  
-  (q/defsketch quil-test
-    :size :fullscreen
-    :setup setup1
-    :mouse-clicked click-handle
-    :draw draw1
-    :middleware [m/fun-mode]
-    )
+  (do (close-app speaker)
+      (close-app audience))
+
   )

@@ -335,32 +335,26 @@
     (doto prx-obj
       (attach-applet-listeners))))
 
-(defn make-viz
-  ([size setup update draw]
-   (applet
-    :size size
-    :setup setup
-    :update update
-    :draw draw
-    :middleware [m/fun-mode]))
-  ([size setup draw]
-   (applet
-    :size size
-    :setup setup
-    :draw draw))
-  ([size setup update draw & opts]
-   (apply applet
-          (merge {:size size
-                  :setup setup
-                  :update update
-                  :draw draw
-                  :middleware [m/fun-mode]}
-                 (apply hash-map opts)))))
+(defmacro defapplet
+  "Define and start an applet and bind it to a var with the symbol
+  app-name. If any of the options to the various callbacks are
+  symbols, it wraps them in a call to var to ensure they aren't
+  inlined and that redefinitions to the original fns are reflected in
+  the visualisation. See applet for the available options."
+  [app-name & opts]
+  (letfn [(wrap [v]
+            (if (symbol? v)
+              ; It is possible that symbol points to non-fn var.
+              ; For example it points to [300 300] which defines size
+              ; In this case we should not wrap it with (var ...)
+              `(if (fn? ~v) (var ~v) ~v)
+              v))]
+    `(def ~app-name (applet ~@(map wrap opts)))))
 
-(defn run-viz [viz title ren]
+(defn run-app [viz title ren]
   (applet-run viz title ren))
 
-(defn close-viz [viz]
+(defn close-app [viz]
   (applet-disposed viz))
 
 (defn throwaway []

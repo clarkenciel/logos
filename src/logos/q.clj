@@ -94,10 +94,14 @@
 (defn text-box [box-spec]
   (apply q/background (get box-spec :bg [255]))
   (apply q/fill (get box-spec :font-color [0]))
-  (q/text (maybe-lines (box-spec :text)
-                       (get box-spec :word-limit 10))
-          (get box-spec :left-margin 250)
-          (get box-spec :top-margin 250)))
+  (let [r (fn [t tm]
+            (q/text t ;; (maybe-lines t
+                    ;;              (get box-spec :word-limit 10))
+                    (get box-spec :left-margin 250)
+                    tm))
+        txt (box-spec :text)]
+    (doseq [[i t] (zipmap (range (count txt)) txt)]
+      (r t (+ (* i (text-height t)) (get box-spec :top-margin 250))))))
 
 (defn text-setup [info]
   (q/text-leading (get info :leading 10))
@@ -119,11 +123,11 @@
                     :left-margin #(* (q/height) 0.1)
                     :font-color [0]}
         overwrites (apply hash-map params)
-        p (merge defaults overwrites)]
-    (fn [t]
-      (let [tm (if (fn? (p :top-margin))
-                 ((p :top-margin)) (p :top-margin))
-            lm (if (fn? (p :left-margin))
-                 ((p :left-margin)) (p :left-margin))]
-        (merge p {:top-margin tm :left-margin lm :text t})))))
+        dflt (merge defaults overwrites)]
+    (fn [t & overrides]
+      (let [tm (if (fn? (dflt :top-margin))
+                 ((dflt :top-margin)) (dflt :top-margin))
+            lm (if (fn? (dflt :left-margin))
+                 ((dflt :left-margin)) (dflt :left-margin))]
+        (merge dflt {:top-margin tm :left-margin lm :text t} overrides)))))
 
