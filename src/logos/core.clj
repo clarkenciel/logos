@@ -1,9 +1,6 @@
 ;; TODO:
-;; Only onset-count is atomic
-;; slides can be lazy seq
 ;; Transformations of slide texts can be mapped
 ;;   over the slides lazy seq
-;; Keep track of slide-num in a state map
 
 (ns logos.core
   (:use [logos.utils]
@@ -25,6 +22,9 @@
 
 ;; Slide Management
 (def slide-index (atom 0))
+
+(defn mod-inc [div num]
+  (mod (inc num) div))
 
 ;; ============= Slide Rendering
 ;; NB: need to have separate functions for each applet
@@ -48,7 +48,7 @@
   {:draw false})
 
 (defn speaker-click [s e]
-  (let [nu-index (swap! slide-index #(inc %))]
+  (let [nu-index (swap! slide-index (partial mod-inc (count slides)))]
     (println nu-index)
     (assoc s
            :draw true
@@ -72,10 +72,10 @@
   (if (= @slide-index (s :last-slide-index))
     s
     (let [maybe-slide (get-slide slides @slide-index)
-          nuslide     (if (not (empty? maybe-slide))
-                        (maybe-slide :important)
-                        (get (get s :slide nil) :text ""))
-          nubg        (map #(constrain 0 255 (+ % (randrange -1 1)))
+          nuslide     (if (empty? maybe-slide)
+                        (get (get s :slide nil) :text "")
+                        (maybe-slide :important))
+          nubg        (map #(constrain 240 255 (+ % (randrange -1 1)))
                            (s :bg))]
       (assoc s :last-slide-index (inc (s :last-slide-index))
                :draw (to-bool nuslide)
