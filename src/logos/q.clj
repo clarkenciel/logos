@@ -87,13 +87,10 @@
     (* line-count (+ (q/text-ascent) (q/text-descent)))))
 
 (defn text-box [box-spec]
-  (apply q/background (q/constrain (get box-spec :bg [255]) 0 255))
+  (apply q/background (get box-spec :bg [255]))
   (apply q/fill (get box-spec :font-color [0]))
   (let [r (fn [t tm]
-            (q/text t ;; (maybe-lines t
-                    ;;              (get box-spec :word-limit 10))
-                    (get box-spec :left-margin 250)
-                    tm))
+            (q/text t (get box-spec :left-margin 250) tm))
         txt (box-spec :text)]
     (doseq [[i t] (zipmap (range (count txt)) txt)]
       (r t (+ (* i (text-height t)) (get box-spec :top-margin 250))))))

@@ -56,6 +56,9 @@ in logos/resources."}
 (defn most-prominent-word [slide]
   (first (apply sorted-map (slide :percentages))))
 
+(defn get-slide [col n]
+  (first (drop n col)))
+
 ;; slides-fp :: FilePath
 (def slides-fp "/home/danny/dev/clojure/logos/resources/slides.org")
 
@@ -72,9 +75,8 @@ in logos/resources."}
 (def slides-contents (rest (s/split slides-file slide-division-regexp)))
 
 ;; slides :: [Slide]
-(def slide-source (map (fn [[n s]] (make-slide n s))
-                       (zipmap (range (count slides-contents))
-                               slides-contents)))
-slide-source
+(def slides (map (fn [[n s]] (make-slide n s))
+                 (zipmap (range (count slides-contents))
+                         slides-contents)))
 
 

@@ -28,3 +28,6 @@
 
 (defn unwords [l]
   (s/join " " (flatten l)))
+
+(defn to-bool [v]
+  (not (not v)))

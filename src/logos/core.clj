@@ -1,3 +1,10 @@
+;; TODO:
+;; Only onset-count is atomic
+;; slides can be lazy seq
+;; Transformations of slide texts can be mapped
+;;   over the slides lazy seq
+;; Keep track of slide-num in a state map
+
 (ns logos.core
   (:use [logos.utils]
         [logos.slides]
@@ -17,18 +24,7 @@
     (sc-start)))
 
 ;; Slide Management
-(defn atomic-pop-fac
-  "Returns a function that will pop a value off of an atomic list
-  and place it in another atom."
-  [source proxy]
-  (fn []
-    (swap! proxy  (fn [_] (first @source)))
-    (swap! source (fn [x] (rest x)))
-    @proxy))
-
-(def slides (atom (rest slide-source)))
-(def current-slide (atom (first slide-source)))
-(def next-slide (atomic-pop-fac slides current-slide))
+(def slide-index (atom 0))
 
 ;; ============= Slide Rendering
 ;; NB: need to have separate functions for each applet
@@ -52,10 +48,11 @@
   {:draw false})
 
 (defn speaker-click [s e]
-  (do (next-slide)
-      (assoc s
-             :draw true
-             :slide (speaker-tb ((deref current-slide) :body)))))
+  (let [nu-index (swap! slide-index #(inc %))]
+    (println nu-index)
+    (assoc s
+           :draw true
+           :slide (speaker-tb ((get-slide slides nu-index) :body)))))
 
 (defn speaker-draw [s]
   (draw-slide s))
@@ -67,39 +64,43 @@
   (text-setup {:leading 10
                :size 30
                :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-  {:draw false
+  {:last-slide-index @slide-index
+   :draw false
    :bg [240]})
 
 (defn aud-update [s]
-  (let [nuslide (or (when @current-slide
-                      ((deref current-slide) :important))
-                    (get s :slide nil))
-        nubg (map #(constrain 0 255 (+ % (randrange -1 1))) (s :bg))]
-    (assoc s
-           :draw nuslide
-           :slide (audience-tb nuslide :bg nubg))
-    ))
+  (if (= @slide-index (s :last-slide-index))
+    s
+    (let [maybe-slide (get-slide slides @slide-index)
+          nuslide     (if (not (empty? maybe-slide))
+                        (maybe-slide :important)
+                        (get (get s :slide nil) :text ""))
+          nubg        (map #(constrain 0 255 (+ % (randrange -1 1)))
+                           (s :bg))]
+      (assoc s :last-slide-index (inc (s :last-slide-index))
+               :draw (to-bool nuslide)
+               :bg nubg
+               :slide (audience-tb nuslide :bg nubg)))))
 
 (defn aud-draw [s]
   (draw-slide s))
 
 ;; fix make-viz api
-((defn make-apps []
-   (defapplet audience
-     :size :fullscreen
-     :setup aud-setup
-     :update aud-update
-     :draw aud-draw
-     :features [:present :resizable]
-     :middleware [m/fun-mode])
+(defn make-apps []
+  (defapplet audience
+    :size :fullscreen
+    :setup aud-setup
+    :update aud-update
+    :draw aud-draw
+    :features [:present :resizable]
+    :middleware [m/fun-mode])
 
-   (defapplet speaker 
-     :size [700 700]
-     :setup speaker-setup
-     :draw speaker-draw
-     :mouse-clicked speaker-click
-     :key-pressend #(println %)
-     :middleware [m/fun-mode])))
+  (defapplet speaker 
+    :size [700 700]
+    :setup speaker-setup
+    :draw speaker-draw
+    :mouse-clicked speaker-click
+    :middleware [m/fun-mode]))
 
 ;; ============= MAIN
 
@@ -107,13 +108,13 @@
 
   (do
     (make-apps)
-    (run-app speaker "Speaker" :p3d)
-    (run-app audience "Audience" :p3d))
+    (run-app audience "Audience" :p3d)
+    (run-app speaker "Speaker" :p3d))
   
   (do (close-app speaker)
       (close-app audience))
 
-  )
-slide-source
+  
+  slides)
 
 (println "Ready!")
