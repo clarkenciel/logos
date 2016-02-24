@@ -5,26 +5,15 @@
 (ns logos.core
   (:use [logos.utils]
         [logos.slides]
-        [logos.q]
+        [logos.sc]
         [logos.applet]
-        [logos.sc])
+        [logos.q])
   (:require [quil.middleware :as m]))
 
-;; ============= SETUP
 
-;; need to create at least one quil applet before booting overtone
-;; for some reason: https://github.com/overtone/overtone/issues/313
-;; define and call this function simultaneously
-(defn safe-start []
-  (do
-    (throwaway)
-    (sc-start)))
 
 ;; Slide Management
-(def slide-index (atom 0))
-
-(defn mod-inc [div num]
-  (mod (inc num) div))
+(def slide-index (atom -1))
 
 ;; ============= Slide Rendering
 ;; NB: need to have separate functions for each applet
@@ -49,10 +38,11 @@
 
 (defn speaker-click [s e]
   (let [nu-index (swap! slide-index (partial mod-inc (count slides)))]
-    (println nu-index)
-    (assoc s
-           :draw true
-           :slide (speaker-tb ((get-slide slides nu-index) :body)))))
+    (when (and (sc-on?)
+               (>= nu-index 0))
+      (make-listeners))
+    (assoc s :draw true
+             :slide (speaker-tb ((get-slide slides nu-index) :body)))))
 
 (defn speaker-draw [s]
   (draw-slide s))
@@ -104,6 +94,19 @@
 
 ;; ============= MAIN
 
+;; need to create at least one quil applet before booting overtone
+;; for some reason: https://github.com/overtone/overtone/issues/313
+;; define and call this function simultaneously
+(defn safe-start []
+  (do
+    (throwaway)
+    (sc-start)
+    (make-busses)
+    (sc-setup 0 0)
+    (make-apps)
+    (run-app audience "Audience" :p3d)
+    (run-app speaker "Speaker" :p3d)))
+
 (comment
 
   (do
@@ -114,7 +117,12 @@
   (do (close-app speaker)
       (close-app audience))
 
+
+  (safe-start)
+
+  (sc-stop)
   
-  slides)
+  slides
+  )
 
 (println "Ready!")
