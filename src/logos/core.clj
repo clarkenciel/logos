@@ -1,5 +1,6 @@
 (ns logos.core
-  (:use [logos.slides]
+  (:use [logos.utils]
+        [logos.slides]
         [logos.q]
         [logos.applet]
         [logos.sc])
@@ -14,23 +15,6 @@
   (do
     (throwaway)
     (sc-start)))
-
-;; ============= UTILS
-(defn atom? [v]
-  (instance? clojure.lang.Atom v))
-
-(defn reset-counter [c]
-  (swap! c (fn [_] 0)))
-
-(defn store-val [coll v]
-  (swap! coll (fn [c]
-                (conj c (if (atom? v) @v v)))))
-
-(defn reset-val-store [coll]
-  (swap! coll (fn [_] [])))
-
-(defn randrange [lo hi]
-  (+ lo (rand (- (- hi lo) 1))))
 
 ;; Slide Management
 (defn atomic-pop-fac
@@ -55,18 +39,18 @@
       (text-box (s :slide)))))
 
 ;; Speaker
-(def speaker-tb (text-box-fac))
+(def speaker-tb (text-box-fac
+                 :font-color [0]
+                 :top-margin 100
+                 :left-margin 50
+                 :word-limit 20))
 
 (defn speaker-setup []
   (text-setup {:leading 10
                :size 15
-               :font-color [0]
                :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
   {:draw false})
 
-;; TODO: Figure out how to do updating properly between the two
-;; sets of slides
-;; Only speaker-click advances the slide
 (defn speaker-click [s e]
   (do (next-slide)
       (assoc s
@@ -74,7 +58,6 @@
              :slide (speaker-tb ((deref current-slide) :body)))))
 
 (defn speaker-draw [s]
-;;  (text-box (speaker-tb (s :slide)))
   (draw-slide s))
 
 ;; Audience
@@ -84,41 +67,53 @@
   (text-setup {:leading 10
                :size 30
                :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-  {:draw false})
+  {:draw false
+   :bg [240]})
 
-(defn aud-click [s e]
-  (assoc s
-         :draw true
-         :slide (audience-tb ((deref current-slide) :important))))
+(defn aud-update [s]
+  (let [nuslide (or (when @current-slide
+                      ((deref current-slide) :important))
+                    (get s :slide nil))
+        nubg (map #(constrain 0 255 (+ % (randrange -1 1))) (s :bg))]
+    (assoc s
+           :draw nuslide
+           :slide (audience-tb nuslide :bg nubg))
+    ))
 
-(defn aud-draw []
-  (draw-slide {:draw true
-               :slide (merge (audience-tb ((deref current-slide) :important))
-                             {:bg [(randrange 0 100)]})}))
+(defn aud-draw [s]
+  (draw-slide s))
 
 ;; fix make-viz api
-(defapplet speaker 
-  :size [700 700]
-  :setup speaker-setup
-  :draw speaker-draw
-  :mouse-clicked speaker-click
-  :middleware [m/fun-mode])
+((defn make-apps []
+   (defapplet audience
+     :size :fullscreen
+     :setup aud-setup
+     :update aud-update
+     :draw aud-draw
+     :features [:present :resizable]
+     :middleware [m/fun-mode])
 
-(defapplet audience
-  :size :fullscreen
-  :setup aud-setup
-  :draw aud-draw
-  :features [:present :resizable]
-  :middleware [m/pause-on-error])
+   (defapplet speaker 
+     :size [700 700]
+     :setup speaker-setup
+     :draw speaker-draw
+     :mouse-clicked speaker-click
+     :key-pressend #(println %)
+     :middleware [m/fun-mode])))
 
 ;; ============= MAIN
 
 (comment
 
-  (do (run-app speaker "Speaker" :p3d)
-      (run-app audience "Audience" :p3d))
-
+  (do
+    (make-apps)
+    (run-app speaker "Speaker" :p3d)
+    (run-app audience "Audience" :p3d))
+  
   (do (close-app speaker)
       (close-app audience))
 
   )
+slide-source
+
+(println "Ready!")

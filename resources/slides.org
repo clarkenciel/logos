@@ -1,35 +1,17 @@
 
 * Introduction pt. 1:
-some text!
+*I want to talk about some things.*
 
 * Introduction pt. 2:
-more text. *this text is important*
+*I want to talk about how and why we listen.*
 
-* Middle section pt. 3:
-some final text.
+* Introduction pt. 3:
+*I want to talk about how and why we perform.*
 
-* Middle section pt. 5:
-normal preceding *special text* normal post.
+* Introduction pt. 4:
+*I want to talk about how and why I write.*
 
-* Middle section pt. 7:
-a *special preceding* normal post.
-
-* slide 6:
-multi line slides.
-how do they work?
-
-* slide 7:
-*multi line slides with special preceding* how
-do they work?
-
-* slide 8:
-how do *multi line* slides with
-special text in the middle work
-
-* slide 9:
-how do slides with special text
-*at the end work?*
-
-* slide 10:
-how do slides with *special text
-split across lines* work?
+* Some Terms pt. 1:
+As usual, for armchair music theorizing, this talk will
+traverse *Philosophy* and *Psychology*, but there will also
+be a detour through *Ecology*.

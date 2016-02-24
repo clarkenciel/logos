@@ -1,4 +1,5 @@
 (ns logos.q ^{:doc "Collection of rendering functions for quil"}
+  (:use [logos.utils])
   (:require [quil.core :as q]
             [quil.middleware :as m]
             [clojure.string :as s]))
@@ -52,12 +53,6 @@
 
 ;; ===== TEXT BOXES
 
-(defn words [s]
-  (s/split s #"\s"))
-
-(defn unwords [l]
-  (s/join " " (flatten l)))
-
 (defn maybe-font [font-name size]
   (when (some #{font-name} fonts)
     (q/text-font (q/create-font font-name size))))
@@ -92,7 +87,7 @@
     (* line-count (+ (q/text-ascent) (q/text-descent)))))
 
 (defn text-box [box-spec]
-  (apply q/background (get box-spec :bg [255]))
+  (apply q/background (q/constrain (get box-spec :bg [255]) 0 255))
   (apply q/fill (get box-spec :font-color [0]))
   (let [r (fn [t tm]
             (q/text t ;; (maybe-lines t
@@ -129,5 +124,5 @@
                  ((dflt :top-margin)) (dflt :top-margin))
             lm (if (fn? (dflt :left-margin))
                  ((dflt :left-margin)) (dflt :left-margin))]
-        (merge dflt {:top-margin tm :left-margin lm :text t} overrides)))))
-
+        (merge dflt {:top-margin tm :left-margin lm :text t}
+               (apply hash-map overrides))))))
