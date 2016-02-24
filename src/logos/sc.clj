@@ -1,5 +1,6 @@
 (ns logos.sc ^{:doc "Supercollider audio analysis utilities"}
-  (:use overtone.api))
+  (:use [overtone.api]
+        [logos.utils]))
 
 (immigrate-overtone-api)
 
@@ -17,6 +18,11 @@
     (do
       (kill-server)
       (boot-server))))
+
+(defn sc-on? []
+  (if (= (server-status) :disconnected)
+    false
+    true))
 
 (defn get-tap-val [ugen tap-name]
   (deref (get-in ugen [:taps tap-name])))
@@ -60,45 +66,32 @@
 
 ;; Analysis set up
 ;; pipe audio through analysis and to output without modification
-(defmacro make-group [group-name]
-  (let [inputs (str group-name "-inputs")
-        early  (str group-name "-early")
-        late   (str group-name "-late")
-        inputs-s (symbol inputs)
-        early-s  (symbol early)
-        late-s   (symbol late)]
-    `(do
-       (defonce ~group-name (group ~(str group-name)))
-       (defonce ~inputs-s (group ~inputs :head ~group-name))
-       (defonce ~early-s  (group ~early  :after ~inputs-s))
-       (defonce ~late-s   (group ~late   :after ~early-s))
-       ~group-name)))
+(defn sc-setup [input output]
+  (defonce analysis (group "analysis"))
+  (defonce ana-inputs (group "ana-inputs" :head analysis))
+  (defonce ana-early (group "ana-early"  :after ana-inputs))
+  (defonce ana-late (group "ana-late"   :after ana-early))
 
-(defn make-busses []
   (defonce in-bus  (audio-bus 2 "input"))
-  (defonce router  (audio-bus 2 "router")))
+  (defonce router  (audio-bus 2 "router"))
 
-(defmacro make-chain [group input output]
-  (let [ins (symbol (str group "-inputs"))
-        early (symbol (str group "-early"))
-        late  (symbol (str group "-late"))]
-    `(do
-       (def main-in        (pipe-in [:head ~ins] ~output in-bus))
-       (def main-out       (pipe-out [:after main-in] in-bus ~output))
-       (def onset-detector (ja-det [:head ~early] in-bus router))
-       (def onset-sender   (onset-send [:head ~late] router)))))
+  (def main-in        (pipe-in [:head ana-inputs] input in-bus))
+  (def main-out       (pipe-out [:after main-in] in-bus output))
+  (def onset-detector (ja-det [:head ana-early] in-bus router))
+  (def onset-sender   (onset-send [:head ana-late] router)))
 
 (defn clear-chain [group]
   (group-clear group))
 
 ;; Listener set up
-
-(defn make-listeners []
-  (do
-    (defonce onset-counter (atom 0))
-    (defonce pitch-record (atom []))
-    (on-event "/onset" (event-adder-fac onset-counter) ::onset-counter)
-    (on-event "/pitch" (event-concat-fac pitch-record) ::pitch-recorder)))
+;; make-listener :: KeyWord -> EventHandler -> KeyWord
+(defn make-listener
+  "Takes a keyword and handler function (must accept an event as argument)
+  and generates a new event listener. Returns the keyword that can be used
+  to refer to the event listener later"
+  [name f]
+  (do (on-event (str "/" (kw->str name)) f name)
+      name))
 
 (comment
   (restart-server)

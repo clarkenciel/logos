@@ -5,9 +5,6 @@
 (defn atom? [v]
   (instance? clojure.lang.Atom v))
 
-(defn reset-counter [c]
-  (swap! c (fn [_] 0)))
-
 (defn store-val [coll v]
   (swap! coll (fn [c]
                 (conj c (if (atom? v) @v v)))))
@@ -31,3 +28,14 @@
 
 (defn to-bool [v]
   (not (not v)))
+
+(defn mod-inc [div num]
+  (mod (inc num) div))
+
+(defn ns-kw->str [ns-kw]
+  (second (re-find #"/(.*)" (str ns-kw))))
+
+(defn kw->str [kw]
+  (if (namespace kw)
+    (ns-kw->str kw)
+    (second (re-find #":(.*)" (str kw)))))

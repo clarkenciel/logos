@@ -56,7 +56,7 @@ in logos/resources."}
 (defn most-prominent-word [slide]
   (first (apply sorted-map (slide :percentages))))
 
-(defn get-slide [col n]
+(defn get-slide [n col]
   (first (drop n col)))
 
 ;; slides-fp :: FilePath
@@ -66,17 +66,19 @@ in logos/resources."}
 (def slides-file-handle (io/file slides-fp))
 
 ;; slides :: String : slurp :: File -> String
-(def slides-file (if (.exists slides-file-handle)
-                   (slurp slides-file-handle)
-                   ""))
+(defn slides-file []
+  (if (.exists slides-file-handle)
+    (slurp slides-file-handle)
+    ""))
 
 ;; slides-contents [String]
 ;; rest is used here because we always want a seq, even if it's empty
-(def slides-contents (rest (s/split slides-file slide-division-regexp)))
+(defn slides-contents []
+  (rest (s/split (slides-file) slide-division-regexp)))
 
 ;; slides :: [Slide]
-(def slides (map (fn [[n s]] (make-slide n s))
-                 (zipmap (range (count slides-contents))
-                         slides-contents)))
-
-
+(defn get-slides []
+  (let [sc (slides-contents)]
+    (map (fn [[n s]] (make-slide n s))
+         (zipmap (range (count sc))
+                 sc))))
