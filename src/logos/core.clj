@@ -8,9 +8,8 @@
         [logos.applet]
         [logos.q]
         [logos.sc])
-  (:require [quil.middleware :as m]))
-
-
+  (:require [quil.middleware :as m]
+            [clojure.pprint]))
 
 ;; Slide Management
 
@@ -37,21 +36,23 @@
     (when d
       (text-box (s :slide)))))
 
-;; Speaker
 
-(def speaker-tb (text-box-fac
-                 :font-color [0]
-                 :top-margin 100
-                 :left-margin 50
-                 :word-limit 20))
 
-;; speaker-setup :: PresState
-(defn speaker-setup []
-  (text-setup {:leading 10
-               :size 15
-               :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-  {:draw false
-   :listeners-made false})
+;; greatest-onsets :: Integer -> [Slides] -> [Slides]
+(defn n-greatest-onsets [n slides]
+  (take n (into (sorted-map-by
+                 (fn [k1 k2]
+                   (>= ((slides k1) :onsets)
+                       ((slides k2) :onsets))))
+                slides)))
+
+
+(defn n-least-onsets [n slides]
+  (take n (into (sorted-map-by
+                 (fn [k1 k2]
+                   (<= ((slides k1) :onsets)
+                       ((slides k2) :onsets))))
+                slides)))
 
 ;; make-listeners? :: SCServerState -> Integer -> PresState -> Bool
 (defn need-listeners?
@@ -66,29 +67,42 @@
   (when needed?
     (make-listener :onset (fn [_] (inc-counter onset-counter)))))
 
+;; Speaker
+
+(def speaker-tb (text-box-fac
+                 :font-color [0]
+                 :top-margin 100
+                 :left-margin 50
+                 :word-limit 20))
+
+;; speaker-setup :: PresState
+(defn speaker-setup []
+  (text-setup {:leading 10
+               :size 15
+               :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
+  (let [slides (get-slides)
+        nuslides (apply merge (map (fn [[k v]] {k (assoc v :onsets 0)}) slides))]
+    {:draw false
+     :listeners-made false
+     :slides nuslides
+     :slide-count (count slides)}))
+
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
-  (let [nu-index (swap! slide-index (partial mod-inc (count slides)))]
+  (let [slides   (s :slides)
+        slide-count (s :slide-count)
+        nu-index (swap! slide-index (partial mod-inc slide-count))]
     (do
       (reset-num-atom onset-counter 0)
       (assoc s
              :draw true
              :slide (-> nu-index
-                        (get-slide slides)
+                        (slides)
                         (get :body)
                         (speaker-tb))
              :listeners-made (->> (need-listeners? (sc-on?) nu-index s)
                                   (maybe-make-listeners)
                                   (to-bool))))))
-
-(macroexpand '(-> nu-index
-                        (get-slide slides)
-                        (get :body)
-                        (speaker-tb)))
-
-(macroexpand '(->> (need-listeners? (sc-on?) nu-index s)
-                                  (maybe-make-listeners)
-                                  (to-bool)))
 
 (defn speaker-draw [s]
   (draw-slide s))
@@ -107,7 +121,7 @@
 (defn aud-update [s]
   (if (= @slide-index (s :last-slide-index))
     s
-    (let [maybe-slide (get-slide @slide-index slides)
+    (let [maybe-slide (get slides @slide-index nil)
           nuslide     (if (empty? maybe-slide)
                         (get (get s :slide nil) :text "")
                         (if (empty? (maybe-slide :important))

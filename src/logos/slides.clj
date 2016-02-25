@@ -41,13 +41,12 @@ in logos/resources."}
             (map #(/ (count-word % word-list) word-count) unique-wl))))
 
 ;; make-slide :: Integer -> String -> Slide
-(defn make-slide [num s]
+(defn make-slide [s]
   (let [body  (get-body s)
         title (get-title s)
         imp   (get-important s)
         bodys (apply str (interpose " " body))]
-    {:id        num
-     :title     title
+    {:title     title
      :body      body
      :important imp
      :percentages (word-percentages (only-alpha bodys))}))
@@ -79,6 +78,5 @@ in logos/resources."}
 ;; slides :: [Slide]
 (defn get-slides []
   (let [sc (slides-contents)]
-    (map (fn [[n s]] (make-slide n s))
-         (zipmap (range (count sc))
-                 sc))))
+    (apply sorted-map
+           (mapcat #(vector %1 (make-slide %2)) (range (count sc)) sc))))

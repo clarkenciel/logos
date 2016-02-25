@@ -39,3 +39,23 @@
   (if (namespace kw)
     (ns-kw->str kw)
     (second (re-find #":(.*)" (str kw)))))
+
+(defn positions [pred coll]
+  (keep-indexed (fn [idx x]
+                  (when (pred x)
+                    idx))
+                coll))
+
+(defn id [x] x)
+
+(defn n-greatest
+  ([n coll]
+   (n-greatest n coll >))
+  ([n coll f]
+   (take n (sort f coll))))
+
+(defn n-least
+  ([n coll]
+   (n-least n coll <))
+  ([n coll f]
+   (take n (sort f  coll))))
