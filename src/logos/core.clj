@@ -44,7 +44,9 @@
 
 ;; greatest-onsets :: Integer -> [(Integer, Slide)] -> [(Integer, Slides)]
 (defn n-greatest-onsets [n slides]
-  (let [comp (partial onsets-compare slides >=)]
+  (let [slides (if (map? slides) slides
+                   (apply hash-map (flatten slides)))
+        comp (partial onsets-compare slides >=)]
     (take n (into (sorted-map-by comp) slides))))
 
 ;; n-least-onsets :: Integer -> [(Integer, Slide)] -> [(Integer, Slide)]
@@ -87,29 +89,40 @@
 
 ;; swap-n-frequent-words
 ;; :: Integer -> [(String,Double)] -> Slide -> Slide
-(defn swap-n-frequent-words [n new-words slide]
-  (let [slide-body (slide :body)
-        swap-map (make-word-swap-map (get-frequent-words n slide) new-words)]
-    (assoc slide :body (map #(apply-swap-map % swap-map) slide-body))))
+(defn swap-n-frequent-words
+  "Return a new slide with n word replacements in its body"
+  [n new-words slide]
+  (if (empty? slide) slide    
+    (let [slide-body (slide :body)
+          swap-map (make-word-swap-map (get-frequent-words n slide) new-words)]
+      (assoc slide :body (map #(apply-swap-map % swap-map) slide-body)))))
 
 ;; words-n-slides
 ;;   :: Integer -> (Integer -> [(String,Double)] -> [(String,Double)])
 ;;      -> [(Integer,Slides)] -> [(String,Double)]
-(defn words-n-slides [n word-freq-f slides]
+(defn words-n-slides
+  "Return map of the n most frequent words in a collection of slides"
+  [n word-freq-f slides]
   (let [freq-f (partial word-freq-f n)
         wms    (get-word-maps slides)
         freqs  (map #(apply hash-map %) (mapcat freq-f wms))]
-    (reduce assoc-gt {}  freqs)))
+    (reduce assoc-gt {} freqs)))
 
-(let [slides (get-slides)
-      old-slide (slides 5)
-      ws       (words-n-slides 10 n-frequent-words (take 10 slides))]
-  (println "ws")
-  (pprint ws)
-  (println "old slide")
-  (pprint (old-slide :body))
-  (println "new slide")
-  (pprint ((swap-n-frequent-words 100 (keys ws) old-slide) :body)))
+(defn mutate-future-slide
+  "Mutate a future slide's body using the onset information
+  from previous slides"
+  [freq-word-count swap-mul slides current-index target-key]
+  (let [slide-count (count slides)
+        source-slides (partial take (dec current-index))
+        onset-filter  (partial n-greatest-onsets 10)
+        word-fetch-f  (partial words-n-slides freq-word-count n-frequent-words)
+        swap-f (partial swap-n-frequent-words (* swap-mul current-index))]
+    (vector target-key
+            (-> slides
+                ((comp onset-filter source-slides))
+                (word-fetch-f)
+                (keys)
+                (swap-f (slides target-key))))))
 
 ;; make-listeners? :: SCServerState -> Integer -> PresState -> Bool
 (defn need-listeners?
@@ -117,12 +130,13 @@
   made listeners yet.
   Return false if the server is off, we've not passed the title slide, or we already
   have listeners running."
-  [sc-on? slide-index state]
-  (and sc-on? (>= slide-index 1) (not (state :listeners-made))))
+  [sc-on? slide-index listeners-made?]
+  (and sc-on? (>= slide-index 1) (not listeners-made?)))
 
-(defn maybe-make-listeners [needed?]
-  (when needed?
-    (make-listener :onset (fn [_] (inc-counter onset-counter)))))
+(defn maybe-make-listeners [pred & args]
+  (when (apply pred args)
+    (make-listener :onset (fn [_] (inc-counter onset-counter)))
+    true))
 
 ;; Speaker
 
@@ -137,29 +151,45 @@
   (text-setup {:leading 10
                :size 15
                :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-  (let [slides (get-slides)
-        nuslides (apply merge (map (fn [[k v]] {k (assoc v :onsets 0)}) slides))]
+  (let [nuslides (apply merge (map (fn [[k v]] {k (assoc v :onsets 0)}) (get-slides)))]
     {:draw false
      :listeners-made false
      :slides nuslides
-     :slide-count (count slides)}))
+     :slide-count (count nuslides)
+     :slide-index -1
+     :mut-lower 1
+     :mut-upper 4}))
 
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
-  (let [slides   (s :slides)
-        slide-count (s :slide-count)
-        nu-index (swap! slide-index (partial mod-inc slide-count))]
+  (let [slindex       (s :slide-index)
+        slides        (assoc-in (s :slides) [slindex :onsets] @onset-counter)
+        slide-count   (s :slide-count)
+        nu-index      (mod-inc slide-count slindex)
+        listeners-on (s :listeners-made)
+        nu-state (assoc
+                  s
+                  :draw true
+                  :slide-index nu-index
+                  :slides (if (and (<= (s :mut-lower) nu-index)
+                                   (<= nu-index (s :mut-upper)))
+                            (apply assoc slides (mutate-future-slide
+                                                 10 5 slides nu-index (inc nu-index)))
+                            slides)
+                  :slide (-> nu-index (slides) (get :body) (speaker-tb))
+                  :listeners-made (to-bool (if listeners-on
+                                             true
+                                             (if (need-listeners?
+                                                  (sc-on?) nu-index listeners-on)
+                                               (make-listener
+                                                :onset
+                                                (fn [_] (inc-counter onset-counter)))
+                                               (println "nope")))))]
+    
     (do
+      (swap! slide-index #(inc %))
       (reset-num-atom onset-counter 0)
-      (assoc s
-             :draw true
-             :slide (-> nu-index
-                        (slides)
-                        (get :body)
-                        (speaker-tb))
-             :listeners-made (->> (need-listeners? (sc-on?) nu-index s)
-                                  (maybe-make-listeners)
-                                  (to-bool))))))
+      nu-state)))
 
 (defn speaker-draw [s]
   (draw-slide s))
@@ -201,7 +231,7 @@
     :setup aud-setup
     :update aud-update
     :draw aud-draw
-    :features [:present :resizable]
+    :features [:resizable]
     :middleware [m/fun-mode])
 
   (defapplet speaker 
@@ -246,9 +276,13 @@
 
   (event-monitor)
 
+  (logos.sc/pp-node-tree)
+
+  (sc-setup 0 0)
+
   onset-counter
-  
-  slides
+
+  (pprint slides)
   )
 
 (println "Ready!")

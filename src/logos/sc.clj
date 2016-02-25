@@ -67,13 +67,13 @@
 ;; Analysis set up
 ;; pipe audio through analysis and to output without modification
 (defn sc-setup [input output]
-  (defonce analysis (group "analysis"))
-  (defonce ana-inputs (group "ana-inputs" :head analysis))
-  (defonce ana-early (group "ana-early"  :after ana-inputs))
-  (defonce ana-late (group "ana-late"   :after ana-early))
+  (def analysis (group "analysis"))
+  (def ana-inputs (group "ana-inputs" :head analysis))
+  (def ana-early (group "ana-early"  :after ana-inputs))
+  (def ana-late (group "ana-late"   :after ana-early))
 
-  (defonce in-bus  (audio-bus 2 "input"))
-  (defonce router  (audio-bus 2 "router"))
+  (def in-bus  (audio-bus 2 "input"))
+  (def router  (audio-bus 2 "router"))
 
   (def main-in        (pipe-in [:head ana-inputs] input in-bus))
   (def main-out       (pipe-out [:after main-in] in-bus output))
