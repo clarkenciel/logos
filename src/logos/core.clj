@@ -10,7 +10,8 @@
         [logos.sc]
         [clojure.pprint])
   (:require [quil.middleware :as m]
-            [clojure.string :as s]))
+            [clojure.string :as s])
+  (:gen-class))
 
 ;; Slide Management
 
@@ -162,40 +163,36 @@
 
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
-  (let [slindex       (s :slide-index)
-        slides        (assoc-in (s :slides) [slindex :onsets] @onset-counter)
-        slide-count   (s :slide-count)
-        nu-index      (mod-inc slide-count slindex)
-        listeners-on (s :listeners-made)
-        nu-state (assoc
-                  s
-                  :draw true
-                  :slide-index nu-index
-                  :slides (if (and (<= (s :mut-lower) nu-index)
-                                   (<= nu-index (s :mut-upper)))
-                            (apply assoc slides (mutate-future-slide
-                                                 10 5 slides nu-index (inc nu-index)))
-                            slides)
-                  :slide (-> nu-index (slides) (get :body) (speaker-tb))
-                  :listeners-made (to-bool (if listeners-on
-                                             true
-                                             (if (need-listeners?
-                                                  (sc-on?) nu-index listeners-on)
-                                               (make-listener
-                                                :onset
-                                                (fn [_] (inc-counter onset-counter)))
-                                               (println "nope")))))]
-    
+  (let [slindex      (s :slide-index)
+        slides       (assoc-in (s :slides) [slindex :onsets] @onset-counter)
+        nu-index     (swap! slide-index (partial mod-inc (s :slide-count)))]    
     (do
-      (swap! slide-index #(inc %))
       (reset-num-atom onset-counter 0)
-      nu-state)))
+      (assoc s
+             :draw true
+             :slide-index nu-index
+             :slides (if (and (<= (s :mut-lower) nu-index)
+                              (<= nu-index (s :mut-upper)))
+                       (apply assoc slides
+                              (mutate-future-slide
+                               10 5 slides nu-index (inc nu-index)))
+                       slides)
+             :slide (-> nu-index (slides) (get :body) (speaker-tb))
+             :listeners-made (to-bool
+                              (maybe-make-listeners
+                               need-listeners?
+                               (sc-on?) nu-index (s :listeners-on)))))))
 
 (defn speaker-draw [s]
   (draw-slide s))
 
 ;; Audience
 (def audience-tb (text-box-fac))
+
+(defn maybe-new-slide [old-slide slides idx]
+  (let [maybe (not-empty (get slides idx nil))]
+    (or (not-empty (filter #(< 0 (count %)) (maybe :important)))
+        (get old-slide :text '("")))))
 
 (defn aud-setup []
   (text-setup {:leading 10
@@ -208,14 +205,8 @@
 (defn aud-update [s]
   (if (= @slide-index (s :last-slide-index))
     s
-    (let [maybe-slide (get slides @slide-index nil)
-          nuslide     (if (empty? maybe-slide)
-                        (get (get s :slide nil) :text "")
-                        (if (empty? (maybe-slide :important))
-                          (get (get s :slide nil) :text "")
-                          (maybe-slide :important)))
-          nubg        (map #(constrain 240 255 (+ % (randrange -1 1)))
-                           (s :bg))]
+    (let [nuslide (maybe-new-slide (s :slide) slides @slide-index)
+          nubg (map #(constrained-walk 240 255 -1 1 %) (s :bg))]
       (assoc s :last-slide-index (inc (s :last-slide-index))
                :draw (to-bool nuslide)
                :bg nubg
@@ -230,15 +221,16 @@
     :size :fullscreen
     :setup aud-setup
     :update aud-update
-    :draw aud-draw
-    :features [:resizable]
+    :draw draw-slide
+    :features [:resizable :no-safe-fns]
     :middleware [m/fun-mode])
 
   (defapplet speaker 
     :size [700 700]
     :setup speaker-setup
-    :draw speaker-draw
+    :draw draw-slide
     :mouse-clicked speaker-click
+    :features [:no-safe-fns]
     :middleware [m/fun-mode]))
 
 ;; ============= MAIN
@@ -286,3 +278,12 @@
   )
 
 (println "Ready!")
+
+(defn exit-on-close [sketch]
+  (let [frame (-> sketch .getParent .getParent .getParent .getParent)]
+    (.setDefaultCloseOperation frame javax.swing.JFrame/EXIT_ON_CLOSE)))
+
+(defn -main [& args]
+  (do (safe-start)
+      (exit-on-close speaker)
+      (exit-on-close audience)))

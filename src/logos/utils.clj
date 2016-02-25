@@ -73,3 +73,9 @@
 (def assoc-gte (partial assoc-compare >=))
 (def assoc-lt (comp not assoc-gte))
 (def assoc-lte (comp not assoc-gt))
+
+(defn random-walk [lo hi v]
+  (+ v (randrange lo hi)))
+
+(defn constrained-walk [clo chi wlo whi v]
+  (constrain clo chi (random-walk wlo whi v)))
