@@ -7,9 +7,10 @@
         [logos.slides]
         [logos.applet]
         [logos.q]
-        [logos.sc])
+        [logos.sc]
+        [clojure.pprint])
   (:require [quil.middleware :as m]
-            [clojure.pprint]))
+            [clojure.string :as s]))
 
 ;; Slide Management
 
@@ -36,23 +37,79 @@
     (when d
       (text-box (s :slide)))))
 
+;; onsets-compare
+;; :: [(Integer, Slide)] -> (Integer -> Integer -> Bool) -> Integer -> Integer -> Bool
+(defn onsets-compare [slides pred k1 k2]
+  (pred ((slides k1) :onsets) ((slides k2) :onsets)))
 
-
-;; greatest-onsets :: Integer -> [Slides] -> [Slides]
+;; greatest-onsets :: Integer -> [(Integer, Slide)] -> [(Integer, Slides)]
 (defn n-greatest-onsets [n slides]
-  (take n (into (sorted-map-by
-                 (fn [k1 k2]
-                   (>= ((slides k1) :onsets)
-                       ((slides k2) :onsets))))
-                slides)))
+  (let [comp (partial onsets-compare slides >=)]
+    (take n (into (sorted-map-by comp) slides))))
 
-
+;; n-least-onsets :: Integer -> [(Integer, Slide)] -> [(Integer, Slide)]
 (defn n-least-onsets [n slides]
-  (take n (into (sorted-map-by
-                 (fn [k1 k2]
-                   (<= ((slides k1) :onsets)
-                       ((slides k2) :onsets))))
-                slides)))
+  (let [comp (partial onsets-compare slides <=)]
+    (take n (into (sorted-map-by comp) slides))))
+
+;; word-freq-compare
+;; :: [(String, Double)] -> (Double -> Double -> Bool) -> String -> String -> Bool
+(defn word-freq-compare [word-map pred k1 k2]
+  (pred (get word-map k1) (get word-map k2)))
+
+;; n-frequent-words :: Integer -> [(String, Double)] -> [(String,Double)]
+(defn n-frequent-words [n word-map]
+  (let [comp (partial word-freq-compare word-map >=)]
+    (take n (into (sorted-map-by comp) (if (not (map? word-map))
+                                         (apply hash-map word-map)
+                                         word-map)))))
+
+;; n-infrequent-words :: Integer -> [(String, Double)] -> [(String,Double)]
+(defn n-infrequent-words [n word-map]
+  (let [comp (partial word-freq-compare word-map <=)]
+    (take n (into (sorted-map-by comp) word-map))))
+
+;; get-word-maps :: [(Integer, Slide)] -> [[(String,Double)]]
+(defn get-word-maps [slides]
+  (map (fn [[k v]] (v :percentages)) slides))
+
+;; make-word-swap-map :: [String] -> [String] -> [(String, String)]
+(defn make-word-swap-map [old-words new-words]
+  (map #(vector (re-pattern  (str "\\b" %1 "\\b")) %2) old-words new-words))
+
+;; apply-swap-map :: String -> [(String, String)] -> String
+(defn apply-swap-map [s swap-map]
+  (reduce #(apply s/replace %1 %2) s swap-map))
+
+;; get-frequent-words :: Integer -> Slide -> [String]
+(defn get-frequent-words [n slide]
+  (-> slide (get :percentages) ((partial n-frequent-words n)) (keys)))
+
+;; swap-n-frequent-words
+;; :: Integer -> [(String,Double)] -> Slide -> Slide
+(defn swap-n-frequent-words [n new-words slide]
+  (let [slide-body (slide :body)
+        swap-map (make-word-swap-map (get-frequent-words n slide) new-words)]
+    (assoc slide :body (map #(apply-swap-map % swap-map) slide-body))))
+
+;; words-n-slides
+;;   :: Integer -> (Integer -> [(String,Double)] -> [(String,Double)])
+;;      -> [(Integer,Slides)] -> [(String,Double)]
+(defn words-n-slides [n word-freq-f slides]
+  (let [freq-f (partial word-freq-f n)
+        wms    (get-word-maps slides)
+        freqs  (map #(apply hash-map %) (mapcat freq-f wms))]
+    (reduce assoc-gt {}  freqs)))
+
+(let [slides (get-slides)
+      old-slide (slides 5)
+      ws       (words-n-slides 10 n-frequent-words (take 10 slides))]
+  (println "ws")
+  (pprint ws)
+  (println "old slide")
+  (pprint (old-slide :body))
+  (println "new slide")
+  (pprint ((swap-n-frequent-words 100 (keys ws) old-slide) :body)))
 
 ;; make-listeners? :: SCServerState -> Integer -> PresState -> Bool
 (defn need-listeners?

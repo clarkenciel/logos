@@ -23,8 +23,7 @@ in logos/resources."}
   (map second (re-seq important-reg s)))
 
 (defn only-alpha [s]
-  (apply str (map second (re-seq #"(\w+ )" s))))
-
+  (apply str (map second (re-seq #"([\w\']+ )" s))))
 
 (defn count-word [word word-list]
   (reduce (fn [acc w]
@@ -34,7 +33,7 @@ in logos/resources."}
           0 word-list))
 
 (defn word-percentages [s]
-  (let [word-list  (words (s/lower-case s))
+  (let [word-list  (filter #(> (count %) 0) (words (s/lower-case s)))
         unique-wl  (set word-list)
         word-count (double (count word-list))]
     (zipmap unique-wl

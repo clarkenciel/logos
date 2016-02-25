@@ -48,14 +48,28 @@
 
 (defn id [x] x)
 
-(defn n-greatest
-  ([n coll]
-   (n-greatest n coll >))
-  ([n coll f]
-   (take n (sort f coll))))
+(defn take-sorted [n coll f]
+  (take n (sort f coll)))
 
-(defn n-least
-  ([n coll]
-   (n-least n coll <))
-  ([n coll f]
-   (take n (sort f  coll))))
+(defn n-greatest [n coll]
+  (take-sorted n coll >))
+
+(defn n-least [n coll]
+  (take-sorted n coll <))
+
+;; assoc-compare :: (Ord,Eq Val) =>
+;;  (Val -> Val -> Bool) -> [(Key,Val)] -> (Key,Val) -> [(Key,Val)]
+(defn assoc-compare [pred col p1]
+  (let [k (first (keys p1))
+        v1 (first (vals p1))]
+    (if (not (some #{k} (keys col)))
+      (merge col (hash-map k v1))
+      (let [v2 (col k)]
+        (if (pred v1 v2)
+          (merge col (hash-map k v1))
+          col)))))
+
+(def assoc-gt (partial assoc-compare >))
+(def assoc-gte (partial assoc-compare >=))
+(def assoc-lt (comp not assoc-gte))
+(def assoc-lte (comp not assoc-gt))
