@@ -13,7 +13,45 @@ towards the world, and the world my body's point of support."
 What does Merleau-Ponty mean when he says that he has the world as
 an incomplete individual? The statement is surely compelling. However,
 its author may have emphasized style a bit too much and occluded his
-intention. My own answer to this *question* is what I would like to talk
-about.
+intention. Or, maybe it is a poor translation. My own answer to this
+*question* is what I would like to talk about.
 
 * Introduction pt. 3:
+The broad, short version of this *answer* is that a person's knowledge
+about themselves and the world is an emergent result of their interactions
+with the world. Put another way: we can only experience ourselves through
+our environment and we can only know our environment through our bodies.
+
+* Introduction pt. 4:
+If you are like me, what I just said sits somewhere between a bromide and
+a hand wave. So, I am going to try to convince you that it is worth
+contemplating in the way that I convinced myself: by looking at the work
+of two pscyhologists, James Gibson and Michael Turvey. Because, having grown
+up in the United States, I know that science, sterilized of subjectivity, beats
+flowery philosophy any day.
+
+* Ecological Psychology pt. 1:
+Gibson is the something like the founder of a field of research called
+*Ecological Psychology*. It isn't well-known by name outside of academia,
+but thanks to the popularization of user design and user experience work,
+brought about by the digital age, ideas from ecological psychology have
+percolated out to us lay people.
+
+* Ecological Psychology pt. 2:
+The most popular idea, by far, is the idea of the *affordance*. It is commonly
+understood to be a property of things in our environment. Some common examples:
+a door knob affords turning, a curb affords secondary use as a balance beam,
+a hammer affords striking. So, industrial and digital designers try to design
+products that have affordances to guide users to the intended use of their
+product.
+
+* Ecological Psychology pt. 3:
+Unfortunately, this common interpretation, as so often happens, is not as
+complex as the original proposition. When he proposed the term, Gibson was
+attempting to describe the relationships between an organism and the objects in
+its environment. On its own, a door knob doesn't afford turning any more than
+a door handle. For the affordance of turning to arise, there must be both the
+door knob and an organism capable of interacting with it in that way.
+
+* Ecological Psychology pt. 4:
+And the word "capable" is important, here.
