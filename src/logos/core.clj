@@ -152,20 +152,25 @@
   (text-setup {:leading 10
                :size 15
                :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
-  (let [nuslides (apply merge (map (fn [[k v]] {k (assoc v :onsets 0)}) (get-slides)))]
+  (let [nuslides (apply merge
+                        (map (fn [[k v]] {k (assoc v :onsets 0)})
+                             (get-slides)))
+        scount   (count nuslides)]
+    (println scount)
     {:draw false
      :listeners-made false
      :slides nuslides
-     :slide-count (count nuslides)
+     :slide-count scount
      :slide-index -1
-     :mut-lower 1
-     :mut-upper 4}))
+     :mut-lower (/ scount 2)
+     :mut-upper (* 2 (/ scount 3))}))
 
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
   (let [slindex      (s :slide-index)
         slides       (assoc-in (s :slides) [slindex :onsets] @onset-counter)
-        nu-index     (swap! slide-index (partial mod-inc (s :slide-count)))]    
+        scount       (s :slide-count)
+        nu-index     (swap! slide-index (partial mod-inc scount))]    
     (do
       (reset-num-atom onset-counter 0)
       (assoc s
@@ -205,7 +210,8 @@
 (defn aud-update [s]
   (if (= @slide-index (s :last-slide-index))
     s
-    (let [nuslide (maybe-new-slide (s :slide) slides @slide-index)
+    (let [slide   (s :slide)
+          nuslide (maybe-new-slide slide slides @slide-index)
           nubg (map #(constrained-walk 240 255 -1 1 %) (s :bg))]
       (assoc s :last-slide-index (inc (s :last-slide-index))
                :draw (to-bool nuslide)
@@ -222,15 +228,15 @@
     :setup aud-setup
     :update aud-update
     :draw draw-slide
-    :features [:resizable :no-safe-fns]
+    :features [:resizable]
     :middleware [m/fun-mode])
 
   (defapplet speaker 
-    :size [700 700]
+    :size [1000 700]
     :setup speaker-setup
     :draw draw-slide
     :mouse-clicked speaker-click
-    :features [:no-safe-fns]
+    ;;:features [:no-safe-fns]
     :middleware [m/fun-mode]))
 
 ;; ============= MAIN

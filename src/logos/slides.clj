@@ -74,8 +74,14 @@ in logos/resources."}
 (defn slides-contents []
   (rest (s/split (slides-file) slide-division-regexp)))
 
+(defn make-print [i s]
+  (println i)
+  (vector i (make-slide s)))
+
 ;; slides :: [Slide]
 (defn get-slides []
   (let [sc (slides-contents)]
     (apply sorted-map
            (mapcat #(vector %1 (make-slide %2)) (range (count sc)) sc))))
+
+

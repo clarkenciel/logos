@@ -1,28 +1,32 @@
 
+* Logos pt 1.:
+*Logos*
+
 * Introduction pt. 1:
 I will begin with a *quote*. A quote is a fine place to begin and,
 in a roundabout way, this quote was the beginning of my journey to
 writing this piece.
 
+* Introduction pt. 2
 The philosopher Maurice Merleau-Ponty once wrote, "I have the world
 as an incomplete individual, through the agency of my body as the
 potentiality of this world ... and because my body is a movement
 towards the world, and the world my body's point of support."
 
-* Introduction pt. 2:
+* Introduction pt. 3:
 What does Merleau-Ponty mean when he says that he has the world as
 an incomplete individual? The statement is surely compelling. However,
 its author may have emphasized style a bit too much and occluded his
 intention. Or, maybe it is a poor translation. My own answer to this
 *question* is what I would like to talk about.
 
-* Introduction pt. 3:
+* Introduction pt. 4:
 The broad, short version of this *answer* is that a person's knowledge
 about themselves and the world is an emergent result of their interactions
 with the world. Put another way: we can only experience ourselves through
 our environment and we can only know our environment through our bodies.
 
-* Introduction pt. 4:
+* Introduction pt. 5:
 If you are like me, what I just said sits somewhere between a bromide and
 a hand wave. So, I am going to try to convince you that it is worth
 contemplating in the way that I convinced myself: by looking at the work
@@ -54,4 +58,153 @@ a door handle. For the affordance of turning to arise, there must be both the
 door knob and an organism capable of interacting with it in that way.
 
 * Ecological Psychology pt. 4:
-And the word "capable" is important, here.
+And the word "capable" is important, here. The affordance disappears again if
+the organism is physically capable but lacks prior experience of knob-like
+things. The knowledge of door knob use emerges from an interaction between
+the structure of the organism's environment and the structure of the organism.
+Individually, the environment and the organism are incomplete with regards to
+the knowledge of door knob turning. And what a profound incompleteness that is!
+
+* Agency pt. 1:
+There is another way in which the common interpretation of affordances is
+inaccurate. This error is not a result of a misunderstanding of Gibson's term,
+however. Instead, it arises from, Gibson felt, fundamentally incorrect framing
+of perception. The problem is that the conventional way of discussing
+perception, and even sensation, assumes that the organism doing the
+perception does not have much *agency*, if it has any at all.
+
+* Agency Pt. 2:
+Gibson's focus was on visual perception and in that realm, studies tend to
+follow a pattern: display visual stimulus to immobile subject and record their
+response, either as a declaration of subjective experience or, nowadays,
+as a reading of brain activity, via something like fMRI or EEG.
+
+* Agency Pt. 3:
+This pattern is a direct extrapolation of our knowledge of how vision
+works at the level of photos and the light receptors in our eyes:
+light comes in, the chemical structure of the photoreceptors change in
+response, electricity flows to and through the brain, we see an image
+of Bill O'Reilly, schocked by our ability to explain that. Input, response.
+
+* Agency Pt. 4:
+Unfortunately, according to Gibson, there is a problem with lifting this model
+up to the level of a mobile organism's perception. We are not stationary and so
+do not require the external world to present all stimuli to us. The world
+provides an infinitely structured stimulus and because we can explore an
+environment we are able, through motion, to move through, and therefore change
+the structure of that stimulus.
+
+* Agency Pt. 5:
+We have agency in our perception. The structure of our perceptual apparatus
+has evolved alongside our ability to move and to change our environment.
+As a result, Gibson claims, to really understand our perception we need to
+engage this ability to explore the environment, to understand the world through
+changing it. This is why visual illusions are effective: they rely on a
+perceiver with a limited ability to explore the environment. Once the perceiver
+can more fully explore the illusion, it disappears.
+
+* Structure Pt. 1:
+So, we take from Gibson the idea that the environment has *structure* and
+the vague understanding that our perceptual apparatus also has structure.
+An affordance is the knowledge that arises through the interaction between
+these two structures. Okay, great. We've explained an aspect of tool use and
+looking at things. This position is still pretty far away from
+"having the world." To close that gap we're going to look at Michael Turvey's
+work and start to move away from the idea of having a mind and the idea of
+consciousness as restricted to the body.
+
+* Structure Pt. 2:
+Turvey is, like Gibson, concerned with perception. Instead of walking the
+well-worn paths of visual and auditory perception, however, Turvey focuses
+on our "mechanical perception": our ability to sense with our bodies. This
+is nice in two regards. First, our mechanical perception is often overlooked
+and yet is by far the closest thing to a universal mode of perception; almost
+every organism displays something like a sense of touch if not of full blown
+proprioception. Second, it makes the link between structure and perception
+more apparent.
+
+* Structure Pt. 3:
+A Turvey study tends to follow this *pattern* in some way: blindfold a human,
+have them perform one task multiple times while making slight variations
+to the task's environment, record how well they perform through variations,
+analyze the data to find patterns across environmental variations. What Turvey
+tends to be able to demonstrate is that even if behavior appears to be highly
+variable, the variation is only masking deeper patterns in the structure
+of the organism. Usually the patterns are movements toward some sort of
+structural stability.
+
+* Structure Pt. 4:
+There are two of Turvey's studies I want to talk about.
+The first is a study of balance. Subjects stood on a pressure-sensitive
+platform. In the first condition, the subject was able to see, and in
+the second condition, the subject was blindfolded. During both conditions,
+experimenters took readings of the subject's center of balance from the board.
+
+* Structure Pt. 5:
+The raw data for the blindfolded condition was noisier than the raw data
+from the unblindfolded condition; subjects seemed to have an easier time
+maintinaining balance with the aid of sight. Deeper analysis revealed two
+things: first, both datsets followed almost exactly the same pattern,
+and second, the dataset from the blindfolded condition showed a more regular
+pattern.
+
+* Structure Pt. 6:
+So, two things could are indicated. First, a human probably follows a regular
+pattern of physical adjustment to maintain balance. Second, when the
+information available in their environment is reduced, say by a blindfold,
+they will become more active, apply their internal structure more frequently,
+to compensate. In the case of this study, that means that the data generated
+by their center of pressure becomes more noisy while the underlying pattern
+of adjustment becomes more stable.
+
+* Structure Pt. 7:
+The second Turvey experiment I want to bring up was a study of place learning.
+Inspired by an investigation into the navigational capabilities of a nocturnal
+spider, Turvey tried to see how well humans can learn a sense of place when
+they cannot see. Put another way, how do we establish our *orientation* without
+vision?
+
+* Structure Pt. 8:
+The experiment was simple, though time consuming and laborious. Experimenters
+blindfolded participants and gave them a stick which they could use to
+mechanically perceive the environment. Subjects were then led to a hallway
+with a variable number of simple physical features like steps and pipes. First,
+experimenters would train a subject on where "home" was in the environment
+by continually leading them away from and back to a single featureless
+spot in the environment. Then, experimenters would start the subject
+away from home, rearrange the features of the environment, and observe
+how well the subject could find their way "home."
+
+* Structure Pt. 9:
+The first result was, perhaps, predictable: subjects were able to develop
+a sense of the "home" position in the environment, and a more feature-rich
+environment minimized error. The second result was more intriguing: not only
+were subjects able to find "home" but when the experimenters moved the features
+of the environment around, subjects woud adjust proportionally. That is,
+subjects did not seem to be storing anything like absolute spatial information.
+Instead they were learning relative positions; an abstracted version of the
+structure of the environment.
+
+* Merleau-Ponty Reprise Pt. 1:
+Now I want to *reprise* Merleau-Ponty's quote: "I have the world
+as an incomplete individual, through the agency of my body as the
+potentiality of this world ... and because my body is a movement
+towards the world, and the world my body's point of support."
+
+* Merleau-Ponty Reprise Pt. 2:
+The Turvey studies make this statement almost invisibly transparent.
+We come to an environment with some amount of internal structure.
+The environment arrives to us with some amount of structure.
+By engaging with the environment we are applying one structure to the other
+and in doing so, changing each. Perception arises from that application and
+from that perception arises knowledge; about ourselves and about the
+environment. We then carry that knowledge forward in time through the
+structural changes that caused it to arise in the first place.
+
+* Merleau-Ponty Reprise Pt. 3:
+A body in isolation, if such a thing were even possible, would be an
+incomplete being for the simple fact that there would be no environment
+for it to engage with. Not only would it be ignorant of the world, but it
+would be ignorant of its own being. The idea that one can know oneself without
+engaging in the world is therefore a fallacy. It is necessary to act in the
+world because it is the only way to know about ourselves.
