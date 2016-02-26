@@ -1,6 +1,3 @@
-;; TODO:
-;; Transformations of slide texts can be mapped
-;;   over the slides lazy seq
 
 (ns logos.core
   (:use [logos.utils]
@@ -11,13 +8,14 @@
         [clojure.pprint])
   (:require [quil.middleware :as m]
             [clojure.string :as s])
-  (:gen-class))
+  )
 
 ;; Slide Management
 
 ;; slide-index :: State Integer
 (def slides (get-slides))
 (def slide-index (atom -1))
+(println (count slides) "slides loaded")
 
 ;; Event listeners
 
@@ -39,7 +37,8 @@
       (text-box (s :slide)))))
 
 ;; onsets-compare
-;; :: [(Integer, Slide)] -> (Integer -> Integer -> Bool) -> Integer -> Integer -> Bool
+;; :: [(Integer, Slide)] -> (Integer -> Integer -> Bool)
+;;    -> Integer -> Integer -> Bool
 (defn onsets-compare [slides pred k1 k2]
   (pred ((slides k1) :onsets) ((slides k2) :onsets)))
 
@@ -56,7 +55,8 @@
     (take n (into (sorted-map-by comp) slides))))
 
 ;; word-freq-compare
-;; :: [(String, Double)] -> (Double -> Double -> Bool) -> String -> String -> Bool
+;; :: [(String, Double)] -> (Double -> Double -> Bool)
+;;    -> String -> String -> Bool
 (defn word-freq-compare [word-map pred k1 k2]
   (pred (get word-map k1) (get word-map k2)))
 
@@ -93,7 +93,7 @@
 (defn swap-n-frequent-words
   "Return a new slide with n word replacements in its body"
   [n new-words slide]
-  (if (empty? slide) slide    
+  (if (empty? slide) slide
     (let [slide-body (slide :body)
           swap-map (make-word-swap-map (get-frequent-words n slide) new-words)]
       (assoc slide :body (map #(apply-swap-map % swap-map) slide-body)))))
@@ -127,10 +127,9 @@
 
 ;; make-listeners? :: SCServerState -> Integer -> PresState -> Bool
 (defn need-listeners?
-  "Return true if the server is running, we're past title slide, and we haven't
-  made listeners yet.
-  Return false if the server is off, we've not passed the title slide, or we already
-  have listeners running."
+  "Return true if the server is running,
+  we're past title slide, and we haven't
+  made listeners yet. False otherwise."
   [sc-on? slide-index listeners-made?]
   (and sc-on? (>= slide-index 1) (not listeners-made?)))
 
@@ -151,7 +150,8 @@
 (defn speaker-setup []
   (text-setup {:leading 10
                :size 15
-               :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
+               :font
+               "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
   (let [nuslides (apply merge
                         (map (fn [[k v]] {k (assoc v :onsets 0)})
                              (get-slides)))
@@ -163,14 +163,16 @@
      :slide-count scount
      :slide-index -1
      :mut-lower (/ scount 2)
-     :mut-upper (* 2 (/ scount 3))}))
+     :mut-upper (* 9 (/ scount 10))}))
 
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
-  (let [slindex      (s :slide-index)
-        slides       (assoc-in (s :slides) [slindex :onsets] @onset-counter)
-        scount       (s :slide-count)
-        nu-index     (swap! slide-index (partial mod-inc scount))]    
+  (let [slindex   (s :slide-index)
+        slides    (assoc-in (s :slides) [slindex :onsets] @onset-counter)
+        scount    (s :slide-count)
+        nu-index  (swap! slide-index (partial mod-inc scount))
+        mut-lower (s :mut-lower)]
+    
     (do
       (reset-num-atom onset-counter 0)
       (assoc s
@@ -180,7 +182,8 @@
                               (<= nu-index (s :mut-upper)))
                        (apply assoc slides
                               (mutate-future-slide
-                               10 5 slides nu-index (inc nu-index)))
+                               (- nu-index mut-lower) 5
+                               slides nu-index (inc nu-index)))
                        slides)
              :slide (-> nu-index (slides) (get :body) (speaker-tb))
              :listeners-made (to-bool
@@ -202,7 +205,8 @@
 (defn aud-setup []
   (text-setup {:leading 10
                :size 30
-               :font "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
+               :font
+               "Hurmit Medium Nerd Font Plus Octicons Plus Pomicons Mono"})
   {:last-slide-index @slide-index
    :draw false
    :bg [240]})
@@ -231,7 +235,7 @@
     :features [:resizable]
     :middleware [m/fun-mode])
 
-  (defapplet speaker 
+  (defapplet speaker
     :size [1000 700]
     :setup speaker-setup
     :draw draw-slide

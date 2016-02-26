@@ -35,7 +35,7 @@ up in the United States, I know that science, sterilized of subjectivity, beats
 flowery philosophy any day.
 
 * Ecological Psychology pt. 1:
-Gibson is the something like the founder of a field of research called
+Gibson is something like the founder of a field of research called
 *Ecological Psychology*. It isn't well-known by name outside of academia,
 but thanks to the popularization of user design and user experience work,
 brought about by the digital age, ideas from ecological psychology have
@@ -208,3 +208,6 @@ for it to engage with. Not only would it be ignorant of the world, but it
 would be ignorant of its own being. The idea that one can know oneself without
 engaging in the world is therefore a fallacy. It is necessary to act in the
 world because it is the only way to know about ourselves.
+
+* The End Pt. 1:
+This is *the end*. thank you for listening.

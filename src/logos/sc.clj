@@ -2,9 +2,8 @@
   (:use [overtone.api]
         [logos.utils]))
 
-(immigrate-overtone-api)
-
 ;; ==================== OVERTONE
+(immigrate-overtone-api)
 
 ;; helper funcs
 (defn sc-start []
