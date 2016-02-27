@@ -162,8 +162,8 @@
      :slides nuslides
      :slide-count scount
      :slide-index -1
-     :mut-lower (/ scount 2)
-     :mut-upper (* 9 (/ scount 10))}))
+     :mut-lower (int (/ scount 3))
+     :mut-upper (int (* 8 (/ scount 10)))}))
 
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
