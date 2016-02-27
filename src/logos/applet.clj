@@ -358,4 +358,4 @@
   (applet-disposed viz))
 
 (defn throwaway []
-  (applet-disposed (applet-run (applet :size [0 0]) "" :p2d)))
+  (applet-disposed (applet-run (applet :size [1 1]) "" :p2d)))

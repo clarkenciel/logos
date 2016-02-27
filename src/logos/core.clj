@@ -1,5 +1,5 @@
 
-(ns logos.core
+(ns logos.core 
   (:use [logos.utils]
         [logos.slides]
         [logos.applet]
@@ -15,6 +15,7 @@
 ;; slide-index :: State Integer
 (def slides (get-slides))
 (def slide-index (atom -1))
+(def onset-counter (atom 0))
 (println (count slides) "slides loaded")
 
 ;; Event listeners
@@ -24,8 +25,6 @@
 
 (defn reset-num-atom [c v]
   (swap! c (fn [_] v)))
-
-(def onset-counter (atom 0))
 
 ;; ============= Slide Rendering
 ;; NB: need to have separate functions for each applet
@@ -104,6 +103,7 @@
 (defn words-n-slides
   "Return map of the n most frequent words in a collection of slides"
   [n word-freq-f slides]
+
   (let [freq-f (partial word-freq-f n)
         wms    (get-word-maps slides)
         freqs  (map #(apply hash-map %) (mapcat freq-f wms))]
@@ -168,7 +168,9 @@
 ;; speaker-click :: PresState -> PresState
 (defn speaker-click [s e]
   (let [slindex   (s :slide-index)
-        slides    (assoc-in (s :slides) [slindex :onsets] @onset-counter)
+        ctr       @onset-counter
+        slides    (s :slides)
+        slides    (assoc-in slides [slindex :onsets] ctr)
         scount    (s :slide-count)
         nu-index  (swap! slide-index (partial mod-inc scount))
         mut-lower (s :mut-lower)]
@@ -216,7 +218,10 @@
     s
     (let [slide   (s :slide)
           nuslide (maybe-new-slide slide slides @slide-index)
-          nubg (map #(constrained-walk 240 255 -1 1 %) (s :bg))]
+          walk-mul (* 0.1 @slide-index)
+          bg   (s :bg)
+          nubg (map #(constrained-walk 240 255 (* -1 walk-mul) walk-mul %) 
+                    bg)]
       (assoc s :last-slide-index (inc (s :last-slide-index))
                :draw (to-bool nuslide)
                :bg nubg
@@ -257,7 +262,7 @@
     (run-app audience "Audience" :p3d)
     (run-app speaker "Speaker" :p3d)
     (event-monitor-on)
-    'app-running))
+    'app-started))
 
 (defn safe-stop []
   (do
@@ -288,12 +293,3 @@
   )
 
 (println "Ready!")
-
-(defn exit-on-close [sketch]
-  (let [frame (-> sketch .getParent .getParent .getParent .getParent)]
-    (.setDefaultCloseOperation frame javax.swing.JFrame/EXIT_ON_CLOSE)))
-
-(defn -main [& args]
-  (do (safe-start)
-      (exit-on-close speaker)
-      (exit-on-close audience)))
